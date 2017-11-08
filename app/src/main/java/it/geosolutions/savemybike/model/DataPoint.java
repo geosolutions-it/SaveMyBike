@@ -7,11 +7,38 @@ package it.geosolutions.savemybike.model;
 
 public class DataPoint {
 
-    private long timeStamp;
+    public long timeStamp;
 
-    private double latitude;
-    private double longitude;
+    //GPS
+    public double latitude;
+    public double longitude;
+    /**
+     * height above the WGS84 ellipsoid in metres
+     */
+    public double elevation;
+    public float accuracy;
+    public float bearing;
 
-    private int mode;
+    //sensors
+    public int batteryLevel;
+    public float batConsumptionPerHour;
+    /**
+     * temperature in celsius
+     */
+    public float temperature;
+    public float pressure;
+
+    public int mode;
+
+    public DataPoint() {
+        this.timeStamp = System.currentTimeMillis();
+    }
+
+    public DataPoint(double latitude, double longitude, long timeStamp, double elevation) {
+        this.timeStamp = timeStamp;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.elevation = elevation;
+    }
 
 }

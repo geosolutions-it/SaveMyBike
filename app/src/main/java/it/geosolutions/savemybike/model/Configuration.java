@@ -1,5 +1,6 @@
 package it.geosolutions.savemybike.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -7,9 +8,12 @@ import java.util.ArrayList;
  *
  */
 
-public class Configuration {
+public class Configuration implements Serializable {
 
-    private ArrayList<Vehicle> vehicles;
+    public ArrayList<Vehicle> vehicles;
+
+    public int persistanceInterval;
+    public int dataReadInterval;
 
     public Configuration(ArrayList<Vehicle> vehicles) {
         this.vehicles = vehicles;
@@ -18,4 +22,5 @@ public class Configuration {
     public ArrayList<Vehicle> getVehicles() {
         return vehicles;
     }
+
 }

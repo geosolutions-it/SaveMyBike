@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 
 import it.geosolutions.savemybike.R;
+import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
 import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 
@@ -34,7 +35,6 @@ public class RecordFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-
         final View view = inflater.inflate(R.layout.fragment_record, container,false);
 
         getModeViews().add(view.findViewById(R.id.mode_foot));
@@ -48,7 +48,7 @@ public class RecordFragment extends Fragment {
         }
         view.findViewById(R.id.record_button).setOnClickListener(modeClickListener);
 
-        selectMode(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
+        selectVehicle(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
 
         return view;
     }
@@ -60,20 +60,11 @@ public class RecordFragment extends Fragment {
         Log.i(TAG, "onHiddenChanged, hidden : "+ hidden);
 
         if(!hidden){
-            selectMode(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
+            selectVehicle(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
         }
     }
 
-
-    @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        Log.i(TAG, "onUserVisibleHint, visible "+ isVisibleToUser);
-    }
-
-
-
-    public void selectMode(Vehicle vehicle){
+    public void selectVehicle(Vehicle vehicle){
 
         Log.i(TAG, "selecting "+vehicle.getType().toString());
 
@@ -119,7 +110,34 @@ public class RecordFragment extends Fragment {
                     ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.CAR);
                     break;
                 case R.id.record_button:
-                    ((ImageView)view).setImageDrawable(ContextCompat.getDrawable(getActivity(),R.drawable.ic_pause));
+
+                    //TODO detect if we are currently recording or not
+                    boolean activeSession = false;
+                    Session currentSession = null;
+
+                    if(((SaveMyBikeActivity)getActivity()).getService() != null &&
+                            ((SaveMyBikeActivity)getActivity()).getService().getSession() != null){
+                        currentSession = ((SaveMyBikeActivity)getActivity()).getService().getSession();
+                        activeSession = currentSession.getState() == Session.SessionState.ACTIVE;
+                    }
+
+                    if(activeSession){
+
+                        //stop service
+                        if(((SaveMyBikeActivity)getActivity()).getService() != null){
+                            ((SaveMyBikeActivity)getActivity()).getService().stopSession();
+                        }
+
+                        getActivity().unbindService(((SaveMyBikeActivity) getActivity()).getServiceConnection());
+
+                        //switch to "Record" UI
+                    } else {
+
+                        ((SaveMyBikeActivity)getActivity()).startRecording();
+
+                        //switch to "Pause" UI
+                        ((ImageView) view).setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_pause));
+                    }
                     break;
             }
         }

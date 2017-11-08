@@ -3,4 +3,12 @@
     <string name="title_record">Record</string>
     <string name="title_stats">Stats</string>
     <string name="title_bikes">Bikes</string>
+
+    <string name="state_started">Record session started</string>
+    <string name="state_stopped">Record session stopped</string>
+
+    <string name="permission_location_required">The permission to acquire your location is required.</string>
+
+
+
 </resources>

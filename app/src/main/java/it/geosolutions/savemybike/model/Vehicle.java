@@ -1,11 +1,13 @@
 package it.geosolutions.savemybike.model;
 
+import java.io.Serializable;
+
 /**
  * Created by Robert Oehler on 26.10.17.
  *
  */
 
-public class Vehicle {
+public class Vehicle implements Serializable {
 
     public enum VehicleType
     {
