@@ -19,8 +19,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-
 import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.service.SaveMyBikeService;
@@ -58,18 +56,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         changeFragment(0);
 
-        //TODO load configuration
-
-        final ArrayList<Vehicle> vehicles = new ArrayList<>();
-
-        vehicles.add(new Vehicle(Vehicle.VehicleType.FOOT, 1000, 0));
-        vehicles.add(new Vehicle(Vehicle.VehicleType.BIKE, 1000, 0));
-        vehicles.add(new Vehicle(Vehicle.VehicleType.BUS, 1000, 0));
-        vehicles.add(new Vehicle(Vehicle.VehicleType.CAR, 1000, 0));
-
-        vehicles.get(1).setSelected(true);
-
-        configuration = new Configuration(vehicles);
+        configuration = Configuration.loadConfiguation();
         currentVehicle = getCurrentVehicleFromConfig();
     }
 

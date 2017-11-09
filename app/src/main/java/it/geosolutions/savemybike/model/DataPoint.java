@@ -7,6 +7,9 @@ package it.geosolutions.savemybike.model;
 
 public class DataPoint {
 
+    public long sessionId;
+    public int vehicleMode;
+
     public long timeStamp;
 
     //GPS
@@ -18,10 +21,15 @@ public class DataPoint {
     public double elevation;
     public float accuracy;
     public float bearing;
+    public float speed;
 
     //sensors
     public int batteryLevel;
     public float batConsumptionPerHour;
+    public float acceleration;
+
+    public int orientation;
+
     /**
      * temperature in celsius
      */
@@ -30,15 +38,51 @@ public class DataPoint {
 
     public int mode;
 
-    public DataPoint() {
-        this.timeStamp = System.currentTimeMillis();
+    public DataPoint(long sessionId, long time, int vehicleMode) {
+
+        this.sessionId = sessionId;
+        this.timeStamp = time;
+        this.vehicleMode = vehicleMode;
     }
 
-    public DataPoint(double latitude, double longitude, long timeStamp, double elevation) {
-        this.timeStamp = timeStamp;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.elevation = elevation;
+    public DataPoint(long sessionId, long time, int vehicleMode, double lat, double lon){
+        this(sessionId, time, vehicleMode);
+
+        this.latitude  = lat;
+        this.longitude = lon;
     }
 
+    public DataPoint(long id,
+                     int vehicle,
+                     double lat,
+                     double lon,
+                     long time,
+                     double elev,
+                     float bear,
+                     float accu,
+                     float spd,
+                     float press,
+                     int bat_l,
+                     float bat_c,
+                     float acc,
+                     int orie,
+                     float temp) {
+
+        this.sessionId = id;
+        this.vehicleMode = vehicle;
+        this.latitude = lat;
+        this.longitude = lon;
+        this.timeStamp = time;
+        this.elevation = elev;
+        this.bearing = bear;
+        this.accuracy = accu;
+        this.speed = spd;
+        this.pressure = press;
+        this.batteryLevel = bat_l;
+        this.batConsumptionPerHour = bat_c;
+        this.acceleration = acc;
+        this.orientation = orie;
+        this.temperature = temp;
+
+    }
 }

@@ -17,29 +17,50 @@ public class Session {
     }
 
     private SessionState state;
-
+    private Bike bike;
+    private Vehicle.VehicleType currentVehicleType;
     private DataPoint currentDataPoint;
 
     private long id;
+    private long lastPersistedIndex;
+    private long lastUploadedIndex;
     private long startTime;
     private long endTime;
+    private String name;
+    private String serverId;
+    private String userId;
+
     private ArrayList<DataPoint> dataPoints;
 
-    public Session(){
+    public Session(Vehicle.VehicleType currentVehicleType){
 
+        this.currentVehicleType = currentVehicleType;
         dataPoints = new ArrayList<>();
         state = SessionState.WAITING_FOR_FIX;
     }
 
+    public Session(long id, Bike bike, long start, long end, String name, String userId, String sId, int state, int lastUpload, int lastPersist) {
+        this.id = id;
+        this.bike = bike;
+        this.startTime = start;
+        this.endTime = end;
+        this.name = name;
+        this.userId = userId;
+        this.serverId = sId;
+        this.state = SessionState.values()[state];
+        this.lastUploadedIndex = lastUpload;
+        this.lastPersistedIndex = lastPersist;
+    }
+
     public DataPoint getCurrentDataPoint() {
         if(currentDataPoint == null){
-            currentDataPoint = new DataPoint();
+            currentDataPoint = new DataPoint(this.id, System.currentTimeMillis(), this.currentVehicleType.ordinal());
         }
         return currentDataPoint;
     }
     public void deepCopyCurrentDataPoint(){
 
-        DataPoint copy = new DataPoint();
+        DataPoint copy = new DataPoint(this.id, System.currentTimeMillis(), this.currentVehicleType.ordinal());
         copy.timeStamp = getCurrentDataPoint().timeStamp;
         copy.elevation = getCurrentDataPoint().elevation;
         copy.latitude = getCurrentDataPoint().latitude;
@@ -69,6 +90,10 @@ public class Session {
         return dataPoints;
     }
 
+    public void setDataPoints(ArrayList<DataPoint> dataPoints) {
+        this.dataPoints = dataPoints;
+    }
+
     public void setId(long id) {
         this.id = id;
     }
@@ -91,5 +116,53 @@ public class Session {
 
     public long getEndTime() {
         return endTime;
+    }
+
+    public Bike getBike() {
+        return bike;
+    }
+
+    public void setBike(Bike bike) {
+        this.bike = bike;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getServerId() {
+        return serverId;
+    }
+
+    public void setServerId(String serverId) {
+        this.serverId = serverId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public long getLastPersistedIndex() {
+        return lastPersistedIndex;
+    }
+
+    public void setLastPersistedIndex(long lastPersistedIndex) {
+        this.lastPersistedIndex = lastPersistedIndex;
+    }
+
+    public long getLastUploadedIndex() {
+        return lastUploadedIndex;
+    }
+
+    public void setLastUploadedIndex(long lastUploadedIndex) {
+        this.lastUploadedIndex = lastUploadedIndex;
+    }
+
+    public void setCurrentVehicleType(Vehicle.VehicleType currentVehicleType) {
+        this.currentVehicleType = currentVehicleType;
     }
 }

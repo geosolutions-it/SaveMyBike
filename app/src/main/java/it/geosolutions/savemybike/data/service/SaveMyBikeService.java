@@ -23,6 +23,7 @@ import it.geosolutions.savemybike.data.dataProviders.GPSProvider;
 import it.geosolutions.savemybike.data.dataProviders.GPSSimulator;
 import it.geosolutions.savemybike.data.dataProviders.IDataProvider;
 import it.geosolutions.savemybike.data.dataProviders.TemperatureSensor;
+import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.data.session.SessionLogic;
 import it.geosolutions.savemybike.model.Configuration;
 import it.geosolutions.savemybike.model.Session;
@@ -67,7 +68,6 @@ public class SaveMyBikeService extends Service {
         if(BuildConfig.DEBUG) {
             Log.d(TAG, "onCreate");
         }
-
     }
 
     @Override
@@ -93,12 +93,12 @@ public class SaveMyBikeService extends Service {
         //2. create or continue a session
         Session session = null;
         if(continueId != -1){
-            session = continueSession(continueId);
+            session = continueSession(continueId, vehicle);
             if(BuildConfig.DEBUG){
                 Log.d(TAG, "continuing session "+ continueId);
             }
         }else{
-            session = createSession();
+            session = createSession(vehicle);
             if(BuildConfig.DEBUG){
                 Log.d(TAG, "starting a new session "+ session.getId());
             }
@@ -227,20 +227,55 @@ public class SaveMyBikeService extends Service {
     }
 
 
+    /**
+     * continues a session if the provided @param sessionId is available in the database
+     * otherwise a new session is created
+     * @param sessionId the id of the session to continue
+     * @param vehicle the current vehicle
+     * @return the continued or the newly created session
+     */
+    private Session continueSession(long sessionId, final Vehicle vehicle) {
 
-    private Session continueSession(long continueId) {
+        Session session = null;
+        //check database for id and reload it
+        final SMBDatabase smbDatabase = new SMBDatabase(getBaseContext());
+        try{
+            smbDatabase.open();
 
-        //TODO check database for id and reload
+            session = smbDatabase.getSession(sessionId);
 
-        return new Session();
+            if(session == null){
+                //this session was not found - create a new one
+                session = createSession(vehicle);
+            }
 
+        } finally {
+            smbDatabase.close();
+        }
+
+        return session;
     }
 
-    private Session createSession() {
+    /**
+     * creates a new session and inserts it into the database
+     * @param vehicle the current vehicle
+     * @return the created session
+     */
+    private Session createSession(final Vehicle vehicle) {
 
-        //TODO insert to database
+        final Session session = new Session(vehicle.getType());
+        //insert to database
+        final SMBDatabase smbDatabase = new SMBDatabase(getBaseContext());
+        try{
+            smbDatabase.open();
+            long id = smbDatabase.insertSession(session, false);
+            session.setId(id);
 
-        return new Session();
+        } finally {
+            smbDatabase.close();
+        }
+
+        return session;
     }
 
     /**

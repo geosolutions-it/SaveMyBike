@@ -23,4 +23,21 @@ public class Configuration implements Serializable {
         return vehicles;
     }
 
+    public static Configuration loadConfiguation(){
+
+        //TODO load real configuration
+
+        final ArrayList<Vehicle> vehicles = new ArrayList<>();
+
+        vehicles.add(new Vehicle(Vehicle.VehicleType.FOOT, 1000, 0));
+        vehicles.add(new Vehicle(Vehicle.VehicleType.BIKE, 1000, 0));
+        vehicles.add(new Vehicle(Vehicle.VehicleType.BUS, 1000, 0));
+        vehicles.add(new Vehicle(Vehicle.VehicleType.CAR, 1000, 0));
+
+        vehicles.get(1).setSelected(true);
+
+        return new Configuration(vehicles);
+
+    }
+
 }

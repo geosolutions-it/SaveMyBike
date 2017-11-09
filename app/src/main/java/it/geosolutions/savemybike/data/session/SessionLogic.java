@@ -2,13 +2,17 @@ package it.geosolutions.savemybike.data.session;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import java.util.TimerTask;
 
+import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.dataProviders.IDataProvider;
+import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.model.Configuration;
 import it.geosolutions.savemybike.model.DataPoint;
 import it.geosolutions.savemybike.model.Session;
@@ -43,6 +47,7 @@ public class SessionLogic implements IDataProvider {
     private boolean hasGPSFix = false;
     private boolean isSimulating;
     private long lastSessionPersistTime;
+    private String databaseName;
 
     public SessionLogic(Context context, Session session, Vehicle vehicle, Configuration configuration) {
 
@@ -127,13 +132,16 @@ public class SessionLogic implements IDataProvider {
 
         //update session with the current data from the location
 
+        session.getCurrentDataPoint().timeStamp = newLocation.getTime();
         session.getCurrentDataPoint().latitude  = newLocation.getLatitude();
         session.getCurrentDataPoint().longitude = newLocation.getLongitude();
         session.getCurrentDataPoint().elevation = newLocation.getAltitude();
         session.getCurrentDataPoint().accuracy  = newLocation.getAccuracy();
         session.getCurrentDataPoint().bearing   = newLocation.getBearing();
+        session.getCurrentDataPoint().speed     = newLocation.getSpeed();
 
         //TODO add more props ?
+        session.getCurrentDataPoint().orientation = context.getResources().getConfiguration().orientation;
     }
 
     private Runnable persistanceTask;
@@ -199,7 +207,64 @@ public class SessionLogic implements IDataProvider {
 
         //TODO persist and remember which were persisted
 
-        this.lastSessionPersistTime = System.currentTimeMillis();
+        if(session == null){
+
+            Log.w(TAG, "no session available, cannot persist to db");
+            getHandler().postDelayed(persistanceTask, persistanceInterval);
+            return;
+        }
+
+        new AsyncTask<Session,Void,Void>(){
+            @Override
+            protected Void doInBackground(Session... sessions) {
+
+                final Session session = sessions[0];
+
+                SMBDatabase database = databaseName == null ? new SMBDatabase(context) : new SMBDatabase(context, databaseName);
+
+                if(database.open()){
+
+                    if (session.getId() <= 0) {
+                        //this was never inserted
+                        long id = database.insertSession(session, false);
+                        session.setId(id);
+                    } else {
+                        database.insertSession(session, true);
+                    }
+
+                    //persist dataPoints
+                    if (session.getDataPoints() != null) {
+
+                        if(session.getDataPoints().size() > session.getLastPersistedIndex()) {
+                            for (int i = (int) session.getLastPersistedIndex(); i < session.getDataPoints().size(); i++) {
+
+                                final DataPoint dataPoint = session.getDataPoints().get(i);
+                                if (dataPoint.sessionId <= 0) {
+                                    dataPoint.sessionId = session.getId();
+                                }
+                                database.insertDataPoint(dataPoint);
+                            }
+                            session.setLastPersistedIndex(session.getDataPoints().size());
+                            database.insertSession(session, true);
+                            if(BuildConfig.DEBUG) {
+                                Log.d(TAG, "DB : persisted to" + session.getLastPersistedIndex());
+                            }
+                        }
+                    } else {
+                        Log.i(TAG, "dataPoints null");
+                    }
+
+                    lastSessionPersistTime = System.currentTimeMillis();
+                    database.close();
+                }else{
+                    Log.w(TAG, "could not open db");
+                }
+                getHandler().postDelayed(persistanceTask, persistanceInterval);
+                return null;
+            }
+        }.execute(session);
+
+
     }
 
     private Handler getHandler() {
@@ -217,8 +282,24 @@ public class SessionLogic implements IDataProvider {
         isSimulating = simulating;
     }
 
+    public Vehicle getVehicle() {
+        return vehicle;
+    }
+
     public void setVehicle(Vehicle vehicle) {
         this.vehicle = vehicle;
+        this.session.setCurrentVehicleType(vehicle.getType());
+    }
+
+    public void setDatabaseName(String databaseName) {
+        this.databaseName = databaseName;
+    }
+
+    public void setTestHandler(){
+
+        HandlerThread handlerThread = new HandlerThread("HandlerThread");
+        handlerThread.start();
+        handler = new Handler(handlerThread.getLooper());
     }
 
     @Override

@@ -41,7 +41,7 @@ public class BikeListFragment extends Fragment {
 
         //TODO load bikes
         final ArrayList<Bike> bikes = new ArrayList<>();
-        bikes.add(new Bike("A default bike"));
+        bikes.add(new Bike(1, "A default bike"));
 
         final BikeAdapter bikeAdapter = new BikeAdapter(getActivity(), R.layout.item_bike, bikes);
 
