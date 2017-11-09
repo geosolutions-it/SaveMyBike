@@ -93,8 +93,8 @@ public class BarometricSensor implements SensorEventListener, IDataProvider {
 
         if(System.currentTimeMillis() - lastDataTime >= DATA_INTERVAL){
 
-            if (service != null && service.getSession() != null) {
-                service.getSession().getCurrentDataPoint().pressure = pressure;
+            if (service != null && service.getSessionLogic() != null && service.getSessionLogic().getSession() != null) {
+                service.getSessionLogic().getSession().getCurrentDataPoint().pressure = pressure;
             }
             lastDataTime = System.currentTimeMillis();
         }

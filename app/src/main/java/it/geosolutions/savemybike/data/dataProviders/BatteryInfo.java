@@ -65,16 +65,16 @@ public class BatteryInfo extends BroadcastReceiver implements IDataProvider {
         if (batteryLevel != lastBatteryLevel) {
             if (lastBatteryLevel != 0) {
 
-                if (service.getSession() != null) {
+                if (service.getSessionLogic() != null && service.getSessionLogic().getSession() != null) {
 
-                    service.getSession().getCurrentDataPoint().batteryLevel = batteryLevel;
+                    service.getSessionLogic().getSession().getCurrentDataPoint().batteryLevel = batteryLevel;
 
                     if (batteryChangeTime != 0) {
 
                         long onePercentTime = System.currentTimeMillis() - batteryChangeTime;
                         float consumptionPerHour = ONE_HOUR / (float) onePercentTime;
 
-                       service.getSession().getCurrentDataPoint().batConsumptionPerHour = consumptionPerHour;
+                       service.getSessionLogic().getSession().getCurrentDataPoint().batConsumptionPerHour = consumptionPerHour;
                     }
                 }
             }

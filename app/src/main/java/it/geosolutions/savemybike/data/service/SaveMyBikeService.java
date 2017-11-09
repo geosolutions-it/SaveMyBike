@@ -107,6 +107,7 @@ public class SaveMyBikeService extends Service {
         //3.session logic
         sessionLogic = new SessionLogic(getBaseContext(), session, vehicle, config);
         sessionLogic.setSimulating(simulate);
+        getDataProviders().add(sessionLogic);
 
         //create data providers:
         //4.a GPS
@@ -326,8 +327,8 @@ public class SaveMyBikeService extends Service {
         }
     }
 
-    public Session getSession() {
-        return sessionLogic.getSession();
+    public SessionLogic getSessionLogic() {
+        return sessionLogic;
     }
 
     public Handler getHandler() {

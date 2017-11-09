@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import java.util.Locale;
 import java.util.TimerTask;
 
 import it.geosolutions.savemybike.BuildConfig;
@@ -55,7 +56,7 @@ public class SessionLogic implements IDataProvider {
         this.session = session;
         this.vehicle = vehicle;
 
-        if(configuration != null){
+        if(configuration != null && configuration.dataReadInterval != 0 && configuration.persistanceInterval != 0){
             this.dataReadInterval = configuration.dataReadInterval;
             this.persistanceInterval = configuration.persistanceInterval;
         }else{
@@ -120,25 +121,23 @@ public class SessionLogic implements IDataProvider {
         }
 
         if(!hasGPSFix){
-            //fix, when
-            if(session.getState() == Session.SessionState.WAITING_FOR_FIX){
-                //set start time when we were waiting for a fix and a start time has been never set
 
-                session.setStartTime(System.currentTimeMillis());
-                session.setState(Session.SessionState.ACTIVE);
-            }
+            //set start time when we were waiting for a fix and a start time has been never set
+            session.setStartTime(System.currentTimeMillis());
+            session.setState(Session.SessionState.ACTIVE);
             hasGPSFix = true;
         }
 
         //update session with the current data from the location
 
-        session.getCurrentDataPoint().timeStamp = newLocation.getTime();
-        session.getCurrentDataPoint().latitude  = newLocation.getLatitude();
-        session.getCurrentDataPoint().longitude = newLocation.getLongitude();
-        session.getCurrentDataPoint().elevation = newLocation.getAltitude();
-        session.getCurrentDataPoint().accuracy  = newLocation.getAccuracy();
-        session.getCurrentDataPoint().bearing   = newLocation.getBearing();
-        session.getCurrentDataPoint().speed     = newLocation.getSpeed();
+        session.getCurrentDataPoint().vehicleMode = vehicle.getType().ordinal();
+        session.getCurrentDataPoint().timeStamp   = newLocation.getTime();
+        session.getCurrentDataPoint().latitude    = newLocation.getLatitude();
+        session.getCurrentDataPoint().longitude   = newLocation.getLongitude();
+        session.getCurrentDataPoint().elevation   = newLocation.getAltitude();
+        session.getCurrentDataPoint().accuracy    = newLocation.getAccuracy();
+        session.getCurrentDataPoint().bearing     = newLocation.getBearing();
+        session.getCurrentDataPoint().speed       = newLocation.getSpeed();
 
         //TODO add more props ?
         session.getCurrentDataPoint().orientation = context.getResources().getConfiguration().orientation;
@@ -169,6 +168,11 @@ public class SessionLogic implements IDataProvider {
                     newDataPoint.mode = vehicle.getType().ordinal();
 
                     session.getDataPoints().add(newDataPoint);
+
+                    if(BuildConfig.DEBUG){
+                        Log.i(TAG, String.format(Locale.US,"did add data point %d vehicle %d lat %.4f lon %.4f", session.getDataPoints().size(), newDataPoint.vehicleMode, newDataPoint.latitude, newDataPoint.longitude));
+                    }
+
                     session.deepCopyCurrentDataPoint();
 
                     getHandler().postDelayed(this, dataReadInterval);
@@ -247,7 +251,7 @@ public class SessionLogic implements IDataProvider {
                             session.setLastPersistedIndex(session.getDataPoints().size());
                             database.insertSession(session, true);
                             if(BuildConfig.DEBUG) {
-                                Log.d(TAG, "DB : persisted to" + session.getLastPersistedIndex());
+                                Log.d(TAG, "DB : persisted to " + session.getLastPersistedIndex());
                             }
                         }
                     } else {

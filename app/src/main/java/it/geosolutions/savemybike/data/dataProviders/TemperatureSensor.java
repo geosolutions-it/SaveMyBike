@@ -83,8 +83,8 @@ public class TemperatureSensor implements SensorEventListener, IDataProvider {
                 Log.i(TAG, String.format(Locale.US, "Temperature changed to %.2f Celsius", temperature));
             }
 
-            if (service != null && service.getSession() != null) {
-                service.getSession().getCurrentDataPoint().temperature = temperature;
+            if (service != null && service.getSessionLogic() != null && service.getSessionLogic().getSession() != null) {
+                service.getSessionLogic().getSession().getCurrentDataPoint().temperature = temperature;
             }
 
             lastDataTime = System.currentTimeMillis();

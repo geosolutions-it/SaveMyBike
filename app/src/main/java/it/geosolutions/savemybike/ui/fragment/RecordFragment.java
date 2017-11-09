@@ -30,6 +30,7 @@ public class RecordFragment extends Fragment {
     private final static String TAG = "RecordFragment";
 
     private ArrayList<View> modeViews;
+    private ImageView recordButton;
 
     @Nullable
     @Override
@@ -46,7 +47,8 @@ public class RecordFragment extends Fragment {
 
             iv.setOnClickListener(modeClickListener);
         }
-        view.findViewById(R.id.record_button).setOnClickListener(modeClickListener);
+        recordButton = view.findViewById(R.id.record_button);
+        recordButton.setOnClickListener(modeClickListener);
 
         selectVehicle(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
 
@@ -111,37 +113,44 @@ public class RecordFragment extends Fragment {
                     break;
                 case R.id.record_button:
 
-                    //TODO detect if we are currently recording or not
-                    boolean activeSession = false;
+                    //detect if we are currently recording or not
                     Session currentSession = null;
 
-                    if(((SaveMyBikeActivity)getActivity()).getService() != null &&
-                            ((SaveMyBikeActivity)getActivity()).getService().getSession() != null){
-                        currentSession = ((SaveMyBikeActivity)getActivity()).getService().getSession();
-                        activeSession = currentSession.getState() == Session.SessionState.ACTIVE;
+                    if(((SaveMyBikeActivity)getActivity()).getCurrentSession() != null){
+                        currentSession = ((SaveMyBikeActivity)getActivity()).getCurrentSession();
                     }
 
-                    if(activeSession){
+                    if(currentSession != null && currentSession.getState() == Session.SessionState.ACTIVE){
 
                         //stop service
-                        if(((SaveMyBikeActivity)getActivity()).getService() != null){
-                            ((SaveMyBikeActivity)getActivity()).getService().stopSession();
-                        }
+                        ((SaveMyBikeActivity)getActivity()).stopRecording();
 
-                        getActivity().unbindService(((SaveMyBikeActivity) getActivity()).getServiceConnection());
-
-                        //switch to "Record" UI
+                        applySessionState(Session.SessionState.STOPPED);
                     } else {
 
                         ((SaveMyBikeActivity)getActivity()).startRecording();
 
-                        //switch to "Pause" UI
-                        ((ImageView) view).setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_pause));
+                        applySessionState(Session.SessionState.ACTIVE);
                     }
                     break;
             }
         }
     };
+
+    public void applySessionState(final Session.SessionState state){
+
+        switch (state){
+
+            case ACTIVE:
+                //switch to "Pause" UI
+                recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_pause));
+                break;
+            case STOPPED:
+                //switch to "Record" UI
+                recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_record));
+                break;
+        }
+    }
 
     public ArrayList<View> getModeViews() {
 

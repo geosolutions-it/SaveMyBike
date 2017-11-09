@@ -9,4 +9,7 @@ public class Constants {
 
     public final static int DEFAULT_DATA_READ_INTERVAL = 1000;
     public final static int DEFAULT_PERSISTANCE_INTERVAL = 15000;
+
+    public static final String SERVICE_NAME = "it.geosolutions.savemybike.data.service.SaveMyBikeService";
+
 }

@@ -11,7 +11,6 @@ public class Session {
 
     public enum SessionState
     {
-        WAITING_FOR_FIX,
         ACTIVE,
         STOPPED
     }
@@ -36,7 +35,7 @@ public class Session {
 
         this.currentVehicleType = currentVehicleType;
         dataPoints = new ArrayList<>();
-        state = SessionState.WAITING_FOR_FIX;
+        state = SessionState.ACTIVE;
     }
 
     public Session(long id, Bike bike, long start, long end, String name, String userId, String sId, int state, int lastUpload, int lastPersist) {

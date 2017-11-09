@@ -1,6 +1,7 @@
 package it.geosolutions.savemybike.ui.activity;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Context;
@@ -21,8 +22,10 @@ import android.widget.Toast;
 
 import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
+import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.service.SaveMyBikeService;
 import it.geosolutions.savemybike.model.Configuration;
+import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
 import it.geosolutions.savemybike.ui.fragment.BikeListFragment;
 import it.geosolutions.savemybike.ui.fragment.RecordFragment;
@@ -36,6 +39,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
     private Configuration configuration;
     private Vehicle currentVehicle;
+    private boolean applyServiceVehicle = false;
 
     protected static final byte PERMISSION_REQUEST = 122;
 
@@ -60,7 +64,34 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         currentVehicle = getCurrentVehicleFromConfig();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
 
+        final boolean isServiceRunning = isServiceRunning(getBaseContext(), Constants.SERVICE_NAME);
+        if(isServiceRunning){
+            bindToService(new Intent(this, SaveMyBikeService.class));
+            Fragment currentFragment = getCurrentFragment();
+            if(currentFragment != null && currentFragment instanceof RecordFragment){
+                ((RecordFragment) currentFragment).applySessionState(Session.SessionState.ACTIVE);
+                applyServiceVehicle = true;
+            }
+        }
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(mService != null){
+            unbindService(mServiceConnection);
+        }
+    }
+
+    /**
+     * starts the recording of a session by launching the recording service and binding to it
+     */
     public void startRecording() {
 
         //check location permission
@@ -70,23 +101,106 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             Intent serviceIntent = new Intent(this, SaveMyBikeService.class);
 
             //TODO configure params
-            boolean simulate = false;
-            int continueId = -1;
-            Configuration configuration = null;
+            boolean simulate = true;
+            long continueId = -1;
 
             serviceIntent.putExtra(SaveMyBikeService.PARAM_SIMULATE, simulate);
             serviceIntent.putExtra(SaveMyBikeService.PARAM_CONTINUE_ID, continueId);
             serviceIntent.putExtra(SaveMyBikeService.PARAM_VEHICLE, currentVehicle);
             serviceIntent.putExtra(SaveMyBikeService.PARAM_CONFIG, configuration);
 
-            bindService(serviceIntent, getServiceConnection(), Context.BIND_AUTO_CREATE);
+            startService(serviceIntent);
+
+            bindToService(serviceIntent);
 
         }
     }
 
+    /**
+     * stops recording a session
+     */
+    public void stopRecording() {
+
+        if(mService != null){
+            mService.stopSession();
+        }
+
+        unbindService(mServiceConnection);
+        //onServiceDisconnected is only called when service crashes, hence nullify service here
+        mService = null;
+    }
 
     /**
-     * To load fragments for sample
+     * bind or rebind to a running service
+     * @param serviceIntent the intent for the service to bind to
+     */
+    private void bindToService(Intent serviceIntent){
+
+        bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    /**
+     * the current connection to the recording service
+     */
+    protected ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+
+            if(binder instanceof SaveMyBikeService.SaveMyBikeBinder) {
+                if(BuildConfig.DEBUG) {
+                    Log.d(TAG, "onServiceConnected");
+                }
+                mService = ((SaveMyBikeService.SaveMyBikeBinder)binder).getService();
+                if(applyServiceVehicle){
+
+                    Fragment currentFragment = getCurrentFragment();
+                    if(currentFragment != null && currentFragment instanceof RecordFragment && mService.getSessionLogic() != null && mService.getSessionLogic().getVehicle() != null){
+                        if(BuildConfig.DEBUG) {
+                            Log.d(TAG, "rebound to service, applying vehicle "+ mService.getSessionLogic().getVehicle().toString());
+                        }
+                        ((RecordFragment) currentFragment).selectVehicle(mService.getSessionLogic().getVehicle());
+                    }
+
+                    applyServiceVehicle = false;
+                }
+            }else{
+                Log.w(TAG, "unexpected : binder is no saveMyBikeBinder");
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+            if(BuildConfig.DEBUG) {
+                Log.d(TAG, "onServiceDisconnected");
+            }
+            mService = null;
+        }
+    };
+
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.navigation_record:
+                    changeFragment(0);
+                    return true;
+                case R.id.navigation_stats:
+                    changeFragment(1);
+                    return true;
+                case R.id.navigation_bikes:
+                    changeFragment(2);
+                    return true;
+            }
+            return false;
+        }
+
+    };
+
+    /**
+     * load fragment for index @param position
      * @param position menu index
      */
     private void changeFragment(int position) {
@@ -121,55 +235,6 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         getFragmentManager().beginTransaction().replace(R.id.content, fragment).commit();
     }
 
-    protected ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder binder) {
-
-            if(binder instanceof SaveMyBikeService.SaveMyBikeBinder) {
-                if(BuildConfig.DEBUG) {
-                    Log.d(TAG, "onServiceConnected");
-                }
-                mService = ((SaveMyBikeService.SaveMyBikeBinder)binder).getService();
-            }else{
-                Log.w(TAG, "unexpected : binder is no saveMyBikeBinder");
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-            if(BuildConfig.DEBUG) {
-                Log.d(TAG, "onServiceDisconnected");
-            }
-            mService = null;
-        }
-    };
-
-    public ServiceConnection getServiceConnection() {
-        return mServiceConnection;
-    }
-
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_record:
-                    changeFragment(0);
-                    return true;
-                case R.id.navigation_stats:
-                    changeFragment(1);
-                    return true;
-                case R.id.navigation_bikes:
-                    changeFragment(2);
-                    return true;
-            }
-            return false;
-        }
-
-    };
-
     public Configuration getConfiguration() {
         return configuration;
     }
@@ -183,10 +248,6 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         }
 
         return null;
-    }
-
-    public SaveMyBikeService getService() {
-        return mService;
     }
 
     /**
@@ -214,7 +275,6 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             }
         }
     }
-
 
     /**
      * ////////////// ANDROID 6 permissions /////////////////
@@ -279,13 +339,47 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+    /**
+     * checks if a service is running in the system
+     * @param context a context
+     * @param serviceName the package name of the service
+     * @return true if running
+     */
+    public boolean isServiceRunning(@NonNull Context context,@NonNull final String serviceName) {
+
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceName.equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return the current session when available - null otherwise
+     */
+    public Session getCurrentSession(){
+
+        if(mService != null && mService.getSessionLogic() != null && mService.getSessionLogic().getSession() != null){
+
+            return mService.getSessionLogic().getSession();
+        }
+        return null;
+    }
 
 
+    /**
+     * @return the currently visible fragment
+     */
     private Fragment getCurrentFragment(){
 
         return getFragmentManager().findFragmentById(R.id.content);
     }
 
+    /**
+     * @return the currently used vehicle
+     */
     public Vehicle getCurrentVehicle() {
         return currentVehicle;
     }
