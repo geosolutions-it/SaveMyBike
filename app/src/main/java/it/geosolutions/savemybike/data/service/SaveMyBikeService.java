@@ -17,12 +17,11 @@ import java.util.ArrayList;
 
 import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
-import it.geosolutions.savemybike.data.dataProviders.BarometricSensor;
 import it.geosolutions.savemybike.data.dataProviders.BatteryInfo;
 import it.geosolutions.savemybike.data.dataProviders.GPSProvider;
 import it.geosolutions.savemybike.data.dataProviders.GPSSimulator;
 import it.geosolutions.savemybike.data.dataProviders.IDataProvider;
-import it.geosolutions.savemybike.data.dataProviders.TemperatureSensor;
+import it.geosolutions.savemybike.data.dataProviders.SensorDataProvider;
 import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.data.session.SessionLogic;
 import it.geosolutions.savemybike.model.Configuration;
@@ -123,12 +122,10 @@ public class SaveMyBikeService extends Service {
             getDataProviders().add(gpsProvider);
         }
 
-        //4.b Baro
-        getDataProviders().add(new BarometricSensor(this));
+        //4.b Sensors
+        getDataProviders().add(new SensorDataProvider(this));
         //4.c Battery
         getDataProviders().add(new BatteryInfo(this));
-        //4.d Temperature
-        getDataProviders().add(new TemperatureSensor(this));
 
         //5.start all data providers
         for(IDataProvider provider : dataProviders){

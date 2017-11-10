@@ -13,8 +13,8 @@ public class DataPoint {
     public long timeStamp;
 
     //GPS
-    public double latitude;
-    public double longitude;
+    public double latitude = Double.MAX_VALUE;
+    public double longitude = Double.MAX_VALUE;
     /**
      * height above the WGS84 ellipsoid in metres
      */

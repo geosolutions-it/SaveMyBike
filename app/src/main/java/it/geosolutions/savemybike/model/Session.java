@@ -1,6 +1,11 @@
 package it.geosolutions.savemybike.model;
 
+import android.location.Location;
+import android.util.Log;
+
 import java.util.ArrayList;
+
+import it.geosolutions.savemybike.BuildConfig;
 
 /**
  * Created by Robert Oehler on 26.10.17.
@@ -75,6 +80,92 @@ public class Session {
         //TODO add additional values
 
         this.currentDataPoint = copy;
+    }
+
+    /**
+     * calculates the distance of this session
+     * by summing up the single distances between the dataPoints
+     * @return the distance
+     */
+    public double getDistance() {
+
+        double dist = 0;
+
+        if(dataPoints != null && dataPoints.size() > 1){
+            for(int i = 1; i < dataPoints.size(); i++){
+
+                //are both locations valid ?
+                if(dataPoints.get(i - 1).latitude == Double.MAX_VALUE || dataPoints.get(i - 1).longitude == Double.MAX_VALUE || dataPoints.get(i).latitude == Double.MAX_VALUE || dataPoints.get(i).longitude == Double.MAX_VALUE){
+
+                    if(BuildConfig.DEBUG) {
+                        Log.d("Session", "skipping invalid " + i);
+                    }
+                    continue;
+                }
+
+                Location from = new Location("from");
+                from.setLatitude(dataPoints.get(i - 1).latitude);
+                from.setLongitude(dataPoints.get(i - 1).longitude);
+
+                Location to   = new Location("to");
+                to.setLatitude(dataPoints.get(i).latitude);
+                to.setLongitude(dataPoints.get(i).longitude);
+
+                dist += from.distanceTo(to);
+            }
+        }
+
+        return dist;
+    }
+
+    /**
+     * calculates the duration of this session
+     *
+     * when start and end time are valid the difference between these is returned
+     * otherwise the diff between the first and the last dataPoint
+     *
+     * @return the overall time of this session
+     */
+    public long getOverallTime(){
+
+        if(startTime != 0 && endTime != 0){
+            return endTime - startTime;
+        }
+        long time = 0;
+        if (dataPoints != null && dataPoints.size() > 1) {
+
+            long first = dataPoints.get(0).timeStamp;
+            long last = dataPoints.get(dataPoints.size() - 1).timeStamp;
+
+            time += last - first;
+
+        }
+        return time;
+    }
+
+    /**
+     * calculates the elevation of this session
+     * @return the sum of all (positive) elevation changes
+     */
+    public double getOverallElevation() {
+
+        double elev = 0;
+
+        if(dataPoints != null && dataPoints.size() > 1){
+            for(int i = 1; i < dataPoints.size(); i++){
+
+               double from = dataPoints.get(i - 1).elevation;
+               double to   = dataPoints.get(i).elevation;
+
+                double diff = to - from;
+                //only count positive elevation
+                if(diff > 0) {
+                    elev += diff;
+                }
+            }
+        }
+
+        return elev;
     }
 
     public SessionState getState() {
