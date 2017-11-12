@@ -180,7 +180,6 @@ public class SaveMyBikeService extends Service {
 
         sessionLogic.stop();
         sessionLogic.getSession().setState(Session.SessionState.STOPPED);
-        sessionLogic.getSession().setEndTime(System.currentTimeMillis());
 
         //synchronize ride
         sessionLogic.persistSession();

@@ -38,8 +38,6 @@ public class SMBDatabase extends SQLiteOpenHelper {
     private static final String SESSION_ID = "session_id";
 
     //Session Table
-    private static final String START_TIME = "start_time";
-    private static final String END_TIME = "end_time";
     private static final String BIKE_ID = "bike_id";
     private static final String NAME = "name";
     private static final String STATE = "state";
@@ -75,8 +73,6 @@ public class SMBDatabase extends SQLiteOpenHelper {
             "CREATE TABLE " + SESSIONS_TABLE +
                     " (" + ID + " integer primary key autoincrement, " +
                     SERVER_ID + " text, "+
-                    START_TIME + " long, " +
-                    END_TIME + " long, " +
                     BIKE_ID + " integer, " +
                     USER_ID + " text, " +
                     STATE + " integer, " +
@@ -172,8 +168,6 @@ public class SMBDatabase extends SQLiteOpenHelper {
     public long insertSession(final Session session, boolean update){
         ContentValues cv = new ContentValues();
 
-        cv.put(START_TIME, session.getStartTime());
-        cv.put(END_TIME, session.getEndTime());
         if(session.getBike() != null) {
             cv.put(BIKE_ID, session.getBike().getId());
         }
@@ -257,7 +251,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
      */
     public ArrayList<Session> getAllSessions(){
 
-        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, START_TIME, END_TIME, NAME, BIKE_ID, USER_ID, STATE, LAST_UPLOADED_INDEX, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", START_TIME), null);
+        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, STATE, LAST_UPLOADED_INDEX, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
 
         ArrayList<Session> sessions = new ArrayList<>();
 
@@ -266,8 +260,6 @@ public class SMBDatabase extends SQLiteOpenHelper {
             do {
 
                 long id         = cursor.getLong(cursor.getColumnIndex(ID));
-                long start      = cursor.getLong(cursor.getColumnIndex(START_TIME));
-                long end        = cursor.getLong(cursor.getColumnIndex(END_TIME));
                 String userId   = cursor.getString(cursor.getColumnIndex(USER_ID));
                 String name     = cursor.getString(cursor.getColumnIndex(NAME));
                 String sId      = cursor.getString(cursor.getColumnIndex(SERVER_ID));
@@ -278,7 +270,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
 
                 Bike bike = getBike(bikeId);
 
-                Session session = new Session(id, bike, start, end, name, userId, sId, state, lastUpload, lastPersist);
+                Session session = new Session(id, bike, name, userId, sId, state, lastUpload, lastPersist);
 
                 ArrayList<DataPoint> dataPoints = getDataPointsForSession(id);
 

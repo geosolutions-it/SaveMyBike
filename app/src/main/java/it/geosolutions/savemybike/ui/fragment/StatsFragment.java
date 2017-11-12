@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Locale;
 
 import it.geosolutions.savemybike.R;
-import it.geosolutions.savemybike.data.Constants;
+import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.model.Session;
 
@@ -114,7 +114,7 @@ public class StatsFragment extends Fragment {
                 }
 
                 overallDistanceTV.setText(String.format(Locale.US,"%.1f km",dist / 1000f ));
-                overallTimeTV.setText(longToTimeString(time));
+                overallTimeTV.setText(Util.longToTimeString(time));
                 overallElevTV.setText(String.format(Locale.US,"%.0f m", elev));
 
                 adapter.addAll(sessions);
@@ -197,31 +197,5 @@ public class StatsFragment extends Fragment {
 
             return view;
         }
-    }
-
-    /**
-     * converts an amount of milliseconds into a human readable String
-     * @param time millis
-     * @return the String
-     */
-    public static String longToTimeString(long time){
-
-        boolean negative = false;
-        if(time < 0){
-            negative = true;
-            time  = Math.abs(time);
-        }
-
-        String format = String.format(Locale.US,"%%0%dd", 2);
-        String seconds = String.format(format, (time % Constants.ONE_MINUTE) / 1000);
-        String minutes = String.format(format, (time % Constants.ONE_HOUR) / Constants.ONE_MINUTE);
-
-        if(time < Constants.ONE_HOUR){
-            return String.format(Locale.US,"%s%s:%s", negative ? "-" : "", minutes, seconds);
-        }else{
-            String hours = String.format(format, time / Constants.ONE_HOUR);
-            return String.format(Locale.US,"%s%s:%s", negative ? "-" : "", hours, minutes);
-        }
-
     }
 }

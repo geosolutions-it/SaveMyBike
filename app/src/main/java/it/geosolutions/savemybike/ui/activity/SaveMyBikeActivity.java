@@ -10,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -17,6 +18,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -35,6 +37,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
     private final static String TAG = "SaveMyBikeActivity";
 
+    private final static int UI_UPDATE_INTERVAL = 1000;
+
     private SaveMyBikeService mService;
 
     private Configuration configuration;
@@ -42,6 +46,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     private boolean applyServiceVehicle = false;
 
     protected static final byte PERMISSION_REQUEST = 122;
+    private Handler handler;
 
     public enum PermissionIntent
     {
@@ -49,6 +54,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         SD_CARD
     }
     protected PermissionIntent mPermissionIntent;
+
+    private boolean simulate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +84,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                 applyServiceVehicle = true;
             }
         }
-
+        //start updating the UI
+        getHandler().removeCallbacks(mUpdateUITask);
+        getHandler().postDelayed(mUpdateUITask, 10);
     }
 
     @Override
@@ -87,6 +96,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         if(mService != null){
             unbindService(mServiceConnection);
         }
+        //start updating the UI
+        getHandler().removeCallbacks(mUpdateUITask);
     }
 
     /**
@@ -101,7 +112,6 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             Intent serviceIntent = new Intent(this, SaveMyBikeService.class);
 
             //TODO configure params
-            boolean simulate = true;
             long continueId = -1;
 
             serviceIntent.putExtra(SaveMyBikeService.PARAM_SIMULATE, simulate);
@@ -112,7 +122,6 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             startService(serviceIntent);
 
             bindToService(serviceIntent);
-
         }
     }
 
@@ -128,6 +137,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         unbindService(mServiceConnection);
         //onServiceDisconnected is only called when service crashes, hence nullify service here
         mService = null;
+
+        invalidateOptionsMenu();
     }
 
     /**
@@ -163,6 +174,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
                     applyServiceVehicle = false;
                 }
+                invalidateOptionsMenu();
             }else{
                 Log.w(TAG, "unexpected : binder is no saveMyBikeBinder");
             }
@@ -339,6 +351,56 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        if(getCurrentSession() == null) {
+
+            getMenuInflater().inflate(R.menu.menu_record, menu);
+
+            MenuItem followItem = menu.findItem(R.id.menu_simulate);
+            followItem.setChecked(simulate);
+            followItem.setIcon(simulate ? android.R.drawable.checkbox_on_background : android.R.drawable.checkbox_off_background);
+
+            return true;
+        }else{
+            return  super.onCreateOptionsMenu(menu);
+        }
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.menu_simulate:
+
+                simulate = !simulate;
+                Fragment currentFragment = getCurrentFragment();
+                if(currentFragment != null && currentFragment instanceof RecordFragment){
+                    ((RecordFragment)currentFragment).applySimulate(simulate);
+                }
+                invalidateOptionsMenu();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private Runnable mUpdateUITask = new Runnable() {
+
+        public void run() {
+
+            Fragment currentFragment = getCurrentFragment();
+            if(currentFragment != null && currentFragment instanceof RecordFragment){
+                Session session = getCurrentSession();
+                ((RecordFragment)currentFragment).invalidate(session);
+            }
+
+            getHandler().postDelayed(this, UI_UPDATE_INTERVAL);
+        }
+    };
+
     /**
      * checks if a service is running in the system
      * @param context a context
@@ -382,5 +444,12 @@ public class SaveMyBikeActivity extends AppCompatActivity {
      */
     public Vehicle getCurrentVehicle() {
         return currentVehicle;
+    }
+
+    private Handler getHandler() {
+        if(handler == null){
+            handler = new Handler();
+        }
+        return handler;
     }
 }

@@ -66,6 +66,7 @@ public class GPSSimulator implements IDataProvider {
                 loc.setAltitude(dataPoint.elevation);
                 loc.setAccuracy(SIM_ACCURACY);
                 loc.setSpeed(SIM_MOVE_SPEED_IN_MS);
+                loc.setTime(System.currentTimeMillis());
 
                 sessionLogic.evaluateNewLocation(loc);
 

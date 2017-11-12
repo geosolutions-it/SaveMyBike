@@ -7,15 +7,18 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import it.geosolutions.savemybike.R;
+import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
 import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
@@ -30,7 +33,14 @@ public class RecordFragment extends Fragment {
     private final static String TAG = "RecordFragment";
 
     private ArrayList<View> modeViews;
+
     private ImageView recordButton;
+    private TextView simulateTV;
+    private TextView distTV;
+    private TextView timeTV;
+    private LinearLayout statsRow;
+
+    private boolean statsHidden = true;
 
     @Nullable
     @Override
@@ -50,25 +60,24 @@ public class RecordFragment extends Fragment {
         recordButton = view.findViewById(R.id.record_button);
         recordButton.setOnClickListener(modeClickListener);
 
+        simulateTV = view.findViewById(R.id.simulate_tv);
+        distTV     = view.findViewById(R.id.stats_dist);
+        timeTV     = view.findViewById(R.id.stats_time);
+        statsRow   = view.findViewById(R.id.stats_row);
+
         selectVehicle(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
+
+        Session session = ((SaveMyBikeActivity) getActivity()).getCurrentSession();
+        if(session == null){
+            applySessionState(Session.SessionState.STOPPED);
+        }else{
+            applySessionState(session.getState());
+        }
 
         return view;
     }
 
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-
-        Log.i(TAG, "onHiddenChanged, hidden : "+ hidden);
-
-        if(!hidden){
-            selectVehicle(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
-        }
-    }
-
     public void selectVehicle(Vehicle vehicle){
-
-        Log.i(TAG, "selecting "+vehicle.getType().toString());
 
         for(int i = 0; i < getModeViews().size(); i++){
 
@@ -94,7 +103,7 @@ public class RecordFragment extends Fragment {
         }
     }
 
-    private View.OnClickListener modeClickListener = new View.OnClickListener() {
+     private View.OnClickListener modeClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
 
@@ -149,6 +158,33 @@ public class RecordFragment extends Fragment {
                 //switch to "Record" UI
                 recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_record));
                 break;
+        }
+    }
+    public void applySimulate(boolean simulate){
+
+        simulateTV.setVisibility(simulate ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    public void invalidate(final Session session){
+
+        if(session != null){
+
+            if(statsHidden){
+                statsRow.setVisibility(View.VISIBLE);
+                statsHidden = false;
+            }
+
+            final double dist = session.getDistance();
+            final long time = session.getOverallTime();
+
+            distTV.setText(String.format(Locale.US,"%.1f km", dist / 1000f));
+            timeTV.setText(Util.longToTimeString(time));
+
+        }else{
+            if(!statsHidden){
+                statsRow.setVisibility(View.INVISIBLE);
+                statsHidden = true;
+            }
         }
     }
 

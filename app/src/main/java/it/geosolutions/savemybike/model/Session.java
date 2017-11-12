@@ -6,6 +6,7 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import it.geosolutions.savemybike.BuildConfig;
+import it.geosolutions.savemybike.data.Constants;
 
 /**
  * Created by Robert Oehler on 26.10.17.
@@ -28,8 +29,6 @@ public class Session {
     private long id;
     private long lastPersistedIndex;
     private long lastUploadedIndex;
-    private long startTime;
-    private long endTime;
     private String name;
     private String serverId;
     private String userId;
@@ -43,11 +42,9 @@ public class Session {
         state = SessionState.ACTIVE;
     }
 
-    public Session(long id, Bike bike, long start, long end, String name, String userId, String sId, int state, int lastUpload, int lastPersist) {
+    public Session(long id, Bike bike, String name, String userId, String sId, int state, int lastUpload, int lastPersist) {
         this.id = id;
         this.bike = bike;
-        this.startTime = start;
-        this.endTime = end;
         this.name = name;
         this.userId = userId;
         this.serverId = sId;
@@ -95,7 +92,11 @@ public class Session {
             for(int i = 1; i < dataPoints.size(); i++){
 
                 //are both locations valid ?
-                if(dataPoints.get(i - 1).latitude == Double.MAX_VALUE || dataPoints.get(i - 1).longitude == Double.MAX_VALUE || dataPoints.get(i).latitude == Double.MAX_VALUE || dataPoints.get(i).longitude == Double.MAX_VALUE){
+                boolean bothValid = isValidLat(dataPoints.get(i - 1).latitude) &&
+                                    isValidLon(dataPoints.get(i - 1).longitude) &&
+                                    isValidLat(dataPoints.get(i).latitude) &&
+                                    isValidLon(dataPoints.get(i).longitude);
+                if(!bothValid){
 
                     if(BuildConfig.DEBUG) {
                         Log.d("Session", "skipping invalid " + i);
@@ -118,6 +119,28 @@ public class Session {
         return dist;
     }
 
+    private boolean isValidLat(double d){
+
+        return  d != Double.POSITIVE_INFINITY &&
+                d != Double.NEGATIVE_INFINITY &&
+                d != Double.MAX_VALUE &&
+                d != Double.MIN_VALUE &&
+                d >= Constants.MIN_LATITUDE &&
+                d <= Constants.MAX_LATITUDE &&
+                d != Double.NaN;
+    }
+
+    private boolean isValidLon(double d){
+
+        return  d != Double.POSITIVE_INFINITY &&
+                d != Double.NEGATIVE_INFINITY &&
+                d != Double.MAX_VALUE &&
+                d != Double.MIN_VALUE &&
+                d >= Constants.MIN_LONGITUDE &&
+                d <= Constants.MAX_LONGITUDE &&
+                d != Double.NaN;
+    }
+
     /**
      * calculates the duration of this session
      *
@@ -128,17 +151,15 @@ public class Session {
      */
     public long getOverallTime(){
 
-        if(startTime != 0 && endTime != 0){
-            return endTime - startTime;
-        }
         long time = 0;
         if (dataPoints != null && dataPoints.size() > 1) {
 
             long first = dataPoints.get(0).timeStamp;
             long last = dataPoints.get(dataPoints.size() - 1).timeStamp;
-
-            time += last - first;
-
+            long diff = last - first;
+            if(diff > 0) {
+                time += diff;
+            }
         }
         return time;
     }
@@ -190,22 +211,6 @@ public class Session {
 
     public long getId() {
         return id;
-    }
-
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
-    }
-
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public void setEndTime(long endTime) {
-        this.endTime = endTime;
-    }
-
-    public long getEndTime() {
-        return endTime;
     }
 
     public Bike getBike() {

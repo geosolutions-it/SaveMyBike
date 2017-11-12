@@ -15,8 +15,20 @@
         android:gravity="center_horizontal"
         android:text="Select a vehicle"
         android:textColor="@android:color/black"
-        android:textSize="24dp"
-        android:textStyle=""/>
+        android:textSize="24dp">
+    </TextView>
+    <TextView
+        android:id="@+id/simulate_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:padding="2dp"
+        android:text="simulation"
+        android:visibility="gone"
+        android:textColor="@android:color/black"
+        android:textSize="12dp"/>
 
     <LinearLayout
         android:id="@+id/mode_parent"
@@ -79,12 +91,49 @@
         </LinearLayout>
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/stats_row"
+        android:layout_width="match_parent"
+        android:layout_above="@+id/record_button"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/stats_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end|center_horizontal"
+            android:fontFamily="sans-serif"
+            android:paddingRight="30dp"
+            android:text="0:01"
+            android:textColor="@android:color/black"
+            android:textSize="24sp"/>
+
+        <TextView
+            android:id="@+id/stats_dist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="start|center_horizontal"
+            android:fontFamily="sans-serif"
+            android:paddingLeft="30dp"
+            android:text="0.12km"
+            android:textColor="@android:color/black"
+            android:textSize="24sp"/>
+    </LinearLayout>
+
     <ImageView
         android:id="@+id/record_button"
         android:layout_width="match_parent"
         android:layout_height="150dp"
         android:layout_alignParentBottom="true"
-        android:layout_margin="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
         app:srcCompat="@drawable/ic_record"/>
 
 </RelativeLayout>

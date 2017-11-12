@@ -121,9 +121,6 @@ public class SessionLogic implements IDataProvider {
         }
 
         if(!hasGPSFix){
-
-            //set start time when we were waiting for a fix and a start time has been never set
-            session.setStartTime(System.currentTimeMillis());
             session.setState(Session.SessionState.ACTIVE);
             hasGPSFix = true;
         }
