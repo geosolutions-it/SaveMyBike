@@ -55,7 +55,7 @@ public class SessionLogicTest {
 
         final CountDownLatch latch = new CountDownLatch(1);
 
-        final Configuration configuration = Configuration.loadConfiguation();
+        final Configuration configuration = Configuration.loadConfiguration(context);
         configuration.dataReadInterval = dataInterval;
         configuration.persistanceInterval = persistInterval;
         final Vehicle.VehicleType vehicleType = Vehicle.VehicleType.BIKE;

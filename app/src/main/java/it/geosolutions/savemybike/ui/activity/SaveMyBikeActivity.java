@@ -67,7 +67,6 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         changeFragment(0);
 
-        configuration = Configuration.loadConfiguation();
         currentVehicle = getCurrentVehicleFromConfig();
     }
 
@@ -117,7 +116,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             serviceIntent.putExtra(SaveMyBikeService.PARAM_SIMULATE, simulate);
             serviceIntent.putExtra(SaveMyBikeService.PARAM_CONTINUE_ID, continueId);
             serviceIntent.putExtra(SaveMyBikeService.PARAM_VEHICLE, currentVehicle);
-            serviceIntent.putExtra(SaveMyBikeService.PARAM_CONFIG, configuration);
+            serviceIntent.putExtra(SaveMyBikeService.PARAM_CONFIG, getConfiguration());
 
             startService(serviceIntent);
 
@@ -247,28 +246,13 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         getFragmentManager().beginTransaction().replace(R.id.content, fragment).commit();
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public Vehicle getCurrentVehicleFromConfig(){
-
-        for(Vehicle vehicle : configuration.getVehicles()){
-            if(vehicle.isSelected()){
-                return vehicle;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * changes the current vehicle in the configuration and updates the UI if a record fragment is currently visible
      * @param vehicleType the new vehicle type
      */
     public void changeVehicle(Vehicle.VehicleType vehicleType){
 
-        for(Vehicle vehicle : configuration.getVehicles()){
+        for(Vehicle vehicle : getConfiguration().getVehicles()){
             if(vehicle.getType() == vehicleType){
                 vehicle.setSelected(true);
                 Fragment currentFragment = getCurrentFragment();
@@ -430,6 +414,31 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         return null;
     }
 
+    /**
+     * gets the configuration - if it is null it is loaded
+     * @return the configuration
+     */
+    public Configuration getConfiguration() {
+        if(configuration == null){
+            configuration = Configuration.loadConfiguration(getBaseContext());
+        }
+        return configuration;
+    }
+
+    /**
+     * gets the currently selected vehicle from the configuration
+     * @return the vehicle
+     */
+    public Vehicle getCurrentVehicleFromConfig(){
+
+        for(Vehicle vehicle : getConfiguration().getVehicles()){
+            if(vehicle.isSelected()){
+                return vehicle;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * @return the currently visible fragment

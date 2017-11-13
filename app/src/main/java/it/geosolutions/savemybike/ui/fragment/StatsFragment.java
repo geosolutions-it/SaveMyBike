@@ -22,9 +22,11 @@ import java.util.List;
 import java.util.Locale;
 
 import it.geosolutions.savemybike.R;
+import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.model.Session;
+import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 
 /**
  * Created by Robert Oehler on 25.10.17.
@@ -113,9 +115,14 @@ public class StatsFragment extends Fragment {
                     elev += session.getOverallElevation();
                 }
 
-                overallDistanceTV.setText(String.format(Locale.US,"%.1f km",dist / 1000f ));
+                if(((SaveMyBikeActivity)getActivity()).getConfiguration().metric) {
+                    overallDistanceTV.setText(String.format(Locale.US, "%.1f %s", dist / 1000f, Constants.UNIT_KM));
+                    overallElevTV.setText(String.format(Locale.US, "%.0f %s", elev, Constants.UNIT_M));
+                }else{
+                    overallDistanceTV.setText(String.format(Locale.US, "%.1f %s", dist / 1000f * Constants.KM_TO_MILES, Constants.UNIT_MI));
+                    overallElevTV.setText(String.format(Locale.US, "%.0f %s", elev * Constants.METER_TO_FEET, Constants.UNIT_FT));
+                }
                 overallTimeTV.setText(Util.longToTimeString(time));
-                overallElevTV.setText(String.format(Locale.US,"%.0f m", elev));
 
                 adapter.addAll(sessions);
                 adapter.notifyDataSetChanged();
@@ -189,10 +196,14 @@ public class StatsFragment extends Fragment {
             if(session.getName() != null) {
                 nameTV.setText(session.getName());
             }else{
-                nameTV.setText("session wo name");
+                nameTV.setText(Constants.DEFAULT_SESSION_NAME);
             }
-            //TODO always metric ?
-            distanceTV.setText(String.format(Locale.US,"%.1f km", (session.getDistance() / 1000f)));
+
+            if(((SaveMyBikeActivity)getActivity()).getConfiguration().metric){
+                distanceTV.setText(String.format(Locale.US,"%.1f %s", (session.getDistance() / 1000f), Constants.UNIT_KM));
+            }else{
+                distanceTV.setText(String.format(Locale.US,"%.1f %s", (session.getDistance() / 1000f) * Constants.KM_TO_MILES, Constants.UNIT_MI));
+            }
             dataTV.setText(String.format(Locale.US,"%d", session.getDataPoints().size()));
 
             return view;

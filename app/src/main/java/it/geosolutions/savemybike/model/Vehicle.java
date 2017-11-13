@@ -1,5 +1,7 @@
 package it.geosolutions.savemybike.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 
 /**
@@ -17,21 +19,23 @@ public class Vehicle implements Serializable {
         CAR
     }
 
-    private VehicleType mType;
-
+    @SerializedName("id")
+    private int vehicleType;
+    @SerializedName("gpsTime")
     private int minimumGPSTime;
+    @SerializedName("gpsDist")
     private int minimumGPSDistance;
 
     private boolean selected;
 
     public Vehicle(VehicleType mType, int minimumGPSTime, int minimumGPSDistance) {
-        this.mType = mType;
+        this.vehicleType = mType.ordinal();
         this.minimumGPSTime = minimumGPSTime;
         this.minimumGPSDistance = minimumGPSDistance;
     }
 
     public VehicleType getType() {
-        return mType;
+        return VehicleType.values()[vehicleType];
     }
 
     public int getMinimumGPSTime() {

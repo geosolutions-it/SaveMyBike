@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
-import java.util.Locale;
 import java.util.TimerTask;
 
 import it.geosolutions.savemybike.BuildConfig;
@@ -166,9 +165,9 @@ public class SessionLogic implements IDataProvider {
 
                     session.getDataPoints().add(newDataPoint);
 
-                    if(BuildConfig.DEBUG){
-                        Log.i(TAG, String.format(Locale.US,"did add data point %d vehicle %d lat %.4f lon %.4f", session.getDataPoints().size(), newDataPoint.vehicleMode, newDataPoint.latitude, newDataPoint.longitude));
-                    }
+//                    if(BuildConfig.DEBUG){
+//                        Log.i(TAG, String.format(Locale.US,"did add data point %d vehicle %d lat %.4f lon %.4f", session.getDataPoints().size(), newDataPoint.vehicleMode, newDataPoint.latitude, newDataPoint.longitude));
+//                    }
 
                     session.deepCopyCurrentDataPoint();
 

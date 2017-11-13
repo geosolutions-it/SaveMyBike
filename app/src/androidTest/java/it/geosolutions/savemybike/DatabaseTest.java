@@ -50,7 +50,6 @@ public class DatabaseTest {
 
         testSession.setName(name);
         testSession.setState(Session.SessionState.ACTIVE);
-        testSession.setStartTime(startTime);
         testSession.setBike(currentBike);
         testSession.setLastPersistedIndex(1);
 
@@ -94,11 +93,10 @@ public class DatabaseTest {
 
         assertNotNull(insertedSession.getBike());
         assertTrue(insertedSession.getBike().getName().equals(currentBike.getName()));
-        assertTrue(insertedSession.getBike().getId() == currentBike.getId());
+        assertTrue(insertedSession.getBike().getLocalId() == currentBike.getLocalId());
 
         assertTrue(insertedSession.getName().equals(name));
         assertTrue(insertedSession.getState() == Session.SessionState.ACTIVE);
-        assertTrue(insertedSession.getStartTime() == startTime);
         assertTrue(insertedSession.getLastPersistedIndex() == 1);
         assertTrue(insertedSession.getLastUploadedIndex() == 0);
 

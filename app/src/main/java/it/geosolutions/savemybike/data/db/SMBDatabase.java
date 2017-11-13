@@ -169,7 +169,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         ContentValues cv = new ContentValues();
 
         if(session.getBike() != null) {
-            cv.put(BIKE_ID, session.getBike().getId());
+            cv.put(BIKE_ID, session.getBike().getLocalId());
         }
         cv.put(STATE, session.getState().ordinal());
         cv.put(NAME, session.getName());
@@ -221,7 +221,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         cv.put(SELECTED, bike.isSelected() ? 1 : 0);
         //insert the row
         if(update){
-            return db.update(BIKES_TABLE, cv, ID + "=" + bike.getId(), null);
+            return db.update(BIKES_TABLE, cv, ID + "=" + bike.getLocalId(), null);
         }else {
             return db.insert(BIKES_TABLE, null, cv);
         }
@@ -368,8 +368,8 @@ public class SMBDatabase extends SQLiteOpenHelper {
                 final int id = cursor.getInt(cursor.getColumnIndex(ID));
                 final String name = cursor.getString(cursor.getColumnIndex(NAME));
                 final String uri = cursor.getString(cursor.getColumnIndex(IMAGE_URI));
-                final boolean selected = cursor.getInt(cursor.getColumnIndex(SELECTED)) > 0;
-                final boolean stolen = cursor.getInt(cursor.getColumnIndex(STOLEN)) > 0;
+                final int selected = cursor.getInt(cursor.getColumnIndex(SELECTED));
+                final int stolen = cursor.getInt(cursor.getColumnIndex(STOLEN));
 
                 final Bike bike  = new Bike(id, name, uri, selected, stolen);
 
@@ -384,7 +384,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
             // add here a default bike and persist it
             final Bike firstBike = Bike.createDefaultBike();
             long id = insertBike(firstBike, false);
-            firstBike.setId(id);
+            firstBike.setLocalId(id);
             bikes.add(firstBike);
         }
 
@@ -396,7 +396,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         final ArrayList<Bike> bikes = getAllBikes();
 
         for(Bike bike : bikes){
-            if(bike.getId() == bikeId){
+            if(bike.getLocalId() == bikeId){
                 return bike;
             }
         }

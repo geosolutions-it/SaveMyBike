@@ -1,19 +1,28 @@
 package it.geosolutions.savemybike.model;
 
+import com.google.gson.annotations.SerializedName;
+
+import java.io.Serializable;
+
 /**
  * Created by Robert Oehler on 26.10.17.
  *
  */
 
-public class Bike {
+public class Bike implements Serializable {
 
     private final static String DEFAULT_BIKE_NAME = "My Bike";
 
-    private long id;
+    private long localId;
     private String name;
+
+    @SerializedName("id")
+    private String remoteId;
+    @SerializedName("image")
     private String imagePath;
-    private boolean stolen;
-    private boolean selected;
+    @SerializedName("state")
+    private int stolen;
+    private int selected;
 
     /**
      * static constructor for a default bike, selected, non stolen
@@ -24,17 +33,17 @@ public class Bike {
                 -1,
                 DEFAULT_BIKE_NAME,
                 null,
-                true,
-                false);
+                1,
+                0);
     }
 
     public Bike(long id, String name) {
-        this.id = id;
+        this.localId = id;
         this.name = name;
     }
 
-    public Bike(int id, String name, String uri, boolean selected, boolean stolen) {
-        this.id = id;
+    public Bike(int id, String name, String uri, int selected, int stolen) {
+        this.localId = id;
         this.name = name;
         this.imagePath = uri;
         this.selected = selected;
@@ -53,27 +62,31 @@ public class Bike {
         return imagePath;
     }
 
-    public long getId() {
-        return id;
+    public long getLocalId() {
+        return localId;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setLocalId(long id) {
+        this.localId = id;
     }
 
     public boolean isStolen() {
-        return stolen;
+        return stolen > 0;
     }
 
     public void setStolen(boolean stolen) {
-        this.stolen = stolen;
+        this.stolen = stolen ? 1 : 0;
     }
 
     public boolean isSelected() {
-        return selected;
+        return selected > 0;
     }
 
     public void setSelected(boolean selected) {
-        this.selected = selected;
+        this.selected = selected ? 1 : 0;
+    }
+
+    public String getRemoteId() {
+        return remoteId;
     }
 }

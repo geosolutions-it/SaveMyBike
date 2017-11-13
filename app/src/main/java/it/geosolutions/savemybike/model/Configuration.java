@@ -1,5 +1,13 @@
 package it.geosolutions.savemybike.model;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -12,36 +20,56 @@ import it.geosolutions.savemybike.data.Constants;
 
 public class Configuration implements Serializable {
 
+    public String id;
+    public Integer version;
+
     public ArrayList<Vehicle> vehicles;
 
-    public int persistanceInterval;
-    public int dataReadInterval;
+    public ArrayList<Bike> bikes;
 
-    public Configuration(ArrayList<Vehicle> vehicles, int dataReadInterval, int persistanceInterval) {
-        this.vehicles = vehicles;
-        this.dataReadInterval = dataReadInterval;
-        this.persistanceInterval = persistanceInterval;
-    }
+    @SerializedName("persistanceInterval")
+    public int persistanceInterval;
+    @SerializedName("dataReadInterval")
+    public int dataReadInterval;
+    @SerializedName("metric")
+    public boolean metric;
+
 
     public ArrayList<Vehicle> getVehicles() {
         return vehicles;
     }
 
-    public static Configuration loadConfiguation(){
+    public static Configuration loadConfiguration(final Context context){
 
-        //TODO load real configuration
+        Gson gson = new Gson();
+        final String jsonConf = loadJSONFromAsset(context);
 
-        final ArrayList<Vehicle> vehicles = new ArrayList<>();
+        Configuration configuration = gson.fromJson(jsonConf, Configuration.class);
 
-        vehicles.add(new Vehicle(Vehicle.VehicleType.FOOT, 1000, 0));
-        vehicles.add(new Vehicle(Vehicle.VehicleType.BIKE, 1000, 0));
-        vehicles.add(new Vehicle(Vehicle.VehicleType.BUS, 1000, 0));
-        vehicles.add(new Vehicle(Vehicle.VehicleType.CAR, 1000, 0));
+        if(configuration != null){
+            for(Vehicle  vehicle : configuration.getVehicles()){
+                Log.i("Config","vehicle "+ vehicle.toString());
+            }
+        }
 
-        vehicles.get(1).setSelected(true);
+        return configuration;
 
-        return new Configuration(vehicles, Constants.DEFAULT_DATA_READ_INTERVAL, Constants.DEFAULT_PERSISTANCE_INTERVAL);
+    }
 
+    private static String loadJSONFromAsset(final Context context) {
+        String json;
+        try {
+            InputStream is = context.getAssets().open(Constants.DEFAULT_CONFIGURATION_FILE);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+        } catch (IOException e) {
+            Log.e("Configuration", "error reading conf json from assets", e);
+            return null;
+        }
+        return json;
     }
 
 }

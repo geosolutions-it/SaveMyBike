@@ -1,11 +1,9 @@
 package it.geosolutions.savemybike.model;
 
 import android.location.Location;
-import android.util.Log;
 
 import java.util.ArrayList;
 
-import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.data.Constants;
 
 /**
@@ -62,7 +60,6 @@ public class Session {
     public void deepCopyCurrentDataPoint(){
 
         DataPoint copy = new DataPoint(this.id, System.currentTimeMillis(), this.currentVehicleType.ordinal());
-        copy.timeStamp = getCurrentDataPoint().timeStamp;
         copy.elevation = getCurrentDataPoint().elevation;
         copy.latitude = getCurrentDataPoint().latitude;
         copy.longitude = getCurrentDataPoint().longitude;
@@ -97,10 +94,6 @@ public class Session {
                                     isValidLat(dataPoints.get(i).latitude) &&
                                     isValidLon(dataPoints.get(i).longitude);
                 if(!bothValid){
-
-                    if(BuildConfig.DEBUG) {
-                        Log.d("Session", "skipping invalid " + i);
-                    }
                     continue;
                 }
 

@@ -18,6 +18,19 @@ public class Constants {
     public final static double MAX_LONGITUDE = 180;
     public final static double MIN_LONGITUDE = -180;
 
+    public static final String DEFAULT_CONFIGURATION_FILE  = "conf.json";
+    public static final String DEFAULT_SESSION_NAME = "Session";
+
     public static final String SERVICE_NAME = "it.geosolutions.savemybike.data.service.SaveMyBikeService";
+
+    public final static String UNIT_KMH = "km/h";
+    public final static String UNIT_MPH = "mph";
+    public final static String UNIT_KM = "km";
+    public final static String UNIT_MI = "mi";
+    public final static String UNIT_M = "m";
+    public final static String UNIT_FT = "ft";
+
+    public final static float KM_TO_MILES = 0.621371192f;
+    public final static float METER_TO_FEET = 3.2808399f;
 
 }

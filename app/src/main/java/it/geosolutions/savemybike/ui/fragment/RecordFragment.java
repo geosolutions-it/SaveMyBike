@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import it.geosolutions.savemybike.R;
+import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
@@ -177,7 +178,12 @@ public class RecordFragment extends Fragment {
             final double dist = session.getDistance();
             final long time = session.getOverallTime();
 
-            distTV.setText(String.format(Locale.US,"%.1f km", dist / 1000f));
+            if(((SaveMyBikeActivity)getActivity()).getConfiguration().metric){
+
+                distTV.setText(String.format(Locale.US,"%.2f %s", dist / 1000f, Constants.UNIT_KM));
+            }else{
+                distTV.setText(String.format(Locale.US,"%.2f %s", dist / 1000f * Constants.KM_TO_MILES, Constants.UNIT_MI));
+            }
             timeTV.setText(Util.longToTimeString(time));
 
         }else{
