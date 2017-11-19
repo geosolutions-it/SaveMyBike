@@ -66,7 +66,12 @@ public class RecordFragment extends Fragment {
         timeTV     = view.findViewById(R.id.stats_time);
         statsRow   = view.findViewById(R.id.stats_row);
 
-        selectVehicle(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
+        invalidateUI(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
+
+        return view;
+    }
+
+    public void invalidateUI(Vehicle vehicle){
 
         Session session = ((SaveMyBikeActivity) getActivity()).getCurrentSession();
         if(session == null){
@@ -74,8 +79,8 @@ public class RecordFragment extends Fragment {
         }else{
             applySessionState(session.getState());
         }
-
-        return view;
+        selectVehicle(vehicle);
+        invalidate(session);
     }
 
     public void selectVehicle(Vehicle vehicle){
@@ -110,16 +115,16 @@ public class RecordFragment extends Fragment {
 
             switch (view.getId()){
                 case R.id.mode_foot:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.FOOT);
+                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.FOOT, true);
                     break;
                 case R.id.mode_bike:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BIKE);
+                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BIKE, true);
                     break;
                 case R.id.mode_bus:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BUS);
+                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BUS, true);
                     break;
                 case R.id.mode_car:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.CAR);
+                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.CAR, true);
                     break;
                 case R.id.record_button:
 

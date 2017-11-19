@@ -23,6 +23,12 @@ public class Constants {
 
     public static final String SERVICE_NAME = "it.geosolutions.savemybike.data.service.SaveMyBikeService";
 
+    public static final String NOTIFICATION_UPDATE_MODE = "it.geosolutions.savemybike.intent.mode";
+    public static final String NOTIFICATION_UPDATE_STOP = "it.geosolutions.savemybike.intent.stop";
+
+    public static final String INTENT_STOP_FROM_SERVICE = "it.geosolutions.savemybike.stop.from.service";
+    public static final String INTENT_VEHICLE_UPDATE    = "it.geosolutions.savemybike.vehicle_update";
+
     public final static String UNIT_KMH = "km/h";
     public final static String UNIT_MPH = "mph";
     public final static String UNIT_KM = "km";

@@ -1,16 +1,11 @@
 package it.geosolutions.savemybike.data.service;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -27,7 +22,6 @@ import it.geosolutions.savemybike.data.session.SessionLogic;
 import it.geosolutions.savemybike.model.Configuration;
 import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
-import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 
 /**
  * Created by Robert Oehler on 28.10.17.
@@ -51,12 +45,12 @@ public class SaveMyBikeService extends Service {
     public static final String PARAM_VEHICLE      = "service.param.vehicle";
     public static final String PARAM_CONFIG       = "service.param.config";
 
-    private static final int NOTIFICATION_ID = 111;
-
     private ArrayList<IDataProvider> dataProviders = new ArrayList<>();
     private SessionLogic sessionLogic;
     private Handler handler;
     private final IBinder mBinder = new SaveMyBikeBinder();
+    private Configuration config;
+    private NotificationManager notificationManager;
 
     private boolean didStop = false;
 
@@ -80,7 +74,6 @@ public class SaveMyBikeService extends Service {
         boolean simulate = false;
         long continueId = -1;
         Vehicle vehicle = null;
-        Configuration config = null;
 
         if(intent != null){
             simulate   =  intent.getBooleanExtra(PARAM_SIMULATE, false);
@@ -137,8 +130,7 @@ public class SaveMyBikeService extends Service {
         }
 
         //6.finally, show a notification
-        Notification n = displayNotificationMessage(getResources().getString(R.string.state_started),true);
-        startForeground(NOTIFICATION_ID, n);
+        getNotificationManager().startNotification(getResources().getString(R.string.state_started), vehicle);
 
         return START_STICKY;
     }
@@ -162,6 +154,18 @@ public class SaveMyBikeService extends Service {
         if(sessionLogic != null){
             sessionLogic.setVehicle(newVehicle);
         }
+        getNotificationManager().stopNotification();
+        getNotificationManager().startNotification(getResources().getString(R.string.state_started), newVehicle);
+    }
+
+    public Vehicle vehicleFromType(int newVehicleType) {
+
+        for (Vehicle vehicle : config.getVehicles()) {
+            if (vehicle.getType().ordinal() == newVehicleType) {
+                return vehicle;
+            }
+        }
+        return null;
     }
 
     /**
@@ -210,17 +214,7 @@ public class SaveMyBikeService extends Service {
 
         stopForeground(true);
 
-        //show a notification that the session was stopped
-        displayNotificationMessage(getResources().getString(R.string.state_stopped),true);
-
-        //and remove it after a second
-        getHandler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(SaveMyBikeService.this);
-                notificationManager.cancel(NOTIFICATION_ID);
-            }
-        }, 1000);
+        getNotificationManager().stopNotification();
     }
 
 
@@ -275,40 +269,6 @@ public class SaveMyBikeService extends Service {
         return session;
     }
 
-    /**
-     * shows a notification message
-     * @param message the message for the notification
-     * @param autoCancel if to autoCancel
-     * @return the notification
-     */
-    private Notification displayNotificationMessage(String message, boolean autoCancel) {
-
-        final NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-
-        int smallIcon = R.mipmap.ic_launcher;
-        //TODO use appropriate icon
-        //int smallIcon =  R.drawable.not_icon_small_white;
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setContentTitle(getString(R.string.app_name))
-                .setAutoCancel(autoCancel)
-                .setContentText(message)
-                .setSmallIcon(smallIcon);
-
-        Intent resultIntent = new Intent(this, SaveMyBikeActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(SaveMyBikeActivity.class);
-        // Adds the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(resultPendingIntent);
-        final Notification notification = builder.build();
-        notificationManager.notify(NOTIFICATION_ID, notification);
-
-        return notification;
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -334,6 +294,11 @@ public class SaveMyBikeService extends Service {
         return handler;
     }
 
+    public Vehicle getCurrentVehicle(){
+
+        return sessionLogic != null ? sessionLogic.getVehicle() : null;
+    }
+
     public ArrayList<IDataProvider> getDataProviders() {
 
         if(dataProviders == null){
@@ -341,5 +306,14 @@ public class SaveMyBikeService extends Service {
         }
 
         return dataProviders;
+    }
+
+    public NotificationManager getNotificationManager() {
+
+        if(notificationManager == null){
+            notificationManager = new NotificationManager(this);
+        }
+
+        return notificationManager;
     }
 }

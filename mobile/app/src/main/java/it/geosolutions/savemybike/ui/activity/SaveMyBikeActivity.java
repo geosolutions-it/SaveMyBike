@@ -3,9 +3,11 @@ package it.geosolutions.savemybike.ui.activity;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -48,6 +50,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
     protected static final byte PERMISSION_REQUEST = 122;
     private Handler handler;
+    private MReceiver mReceiver;
 
     public enum PermissionIntent
     {
@@ -80,15 +83,24 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         final boolean isServiceRunning = isServiceRunning(getBaseContext(), Constants.SERVICE_NAME);
         if(isServiceRunning){
             bindToService(new Intent(this, SaveMyBikeService.class));
-            Fragment currentFragment = getCurrentFragment();
-            if(currentFragment != null && currentFragment instanceof RecordFragment){
-                ((RecordFragment) currentFragment).applySessionState(Session.SessionState.ACTIVE);
-                applyServiceVehicle = true;
-            }
+            applyServiceVehicle = true;
         }
         //start updating the UI
         getHandler().removeCallbacks(mUpdateUITask);
         getHandler().postDelayed(mUpdateUITask, 10);
+
+        registerReceiver(getmReceiver(), new IntentFilter(Constants.INTENT_STOP_FROM_SERVICE));
+        registerReceiver(getmReceiver(), new IntentFilter(Constants.INTENT_VEHICLE_UPDATE));
+
+        //when not having an ongoing session, invalidate with the local vehicle
+        if(!applyServiceVehicle) {
+            Fragment currentFragment = getCurrentFragment();
+            if (currentFragment != null && currentFragment instanceof RecordFragment) {
+                ((RecordFragment) currentFragment).invalidateUI(currentVehicle);
+            }
+        }else{
+            //otherwise the UI update is done when re-binding to the service in @link onServiceConnected()
+        }
     }
 
     @Override
@@ -100,6 +112,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         }
         //start updating the UI
         getHandler().removeCallbacks(mUpdateUITask);
+
+        unregisterReceiver(getmReceiver());
     }
 
     /**
@@ -171,7 +185,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                         if(BuildConfig.DEBUG) {
                             Log.d(TAG, "rebound to service, applying vehicle "+ mService.getSessionLogic().getVehicle().toString());
                         }
-                        ((RecordFragment) currentFragment).selectVehicle(mService.getSessionLogic().getVehicle());
+                        ((RecordFragment) currentFragment).invalidateUI(mService.getSessionLogic().getVehicle());
                     }
 
                     applyServiceVehicle = false;
@@ -253,7 +267,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
      * changes the current vehicle in the configuration and updates the UI if a record fragment is currently visible
      * @param vehicleType the new vehicle type
      */
-    public void changeVehicle(Vehicle.VehicleType vehicleType){
+    public void changeVehicle(Vehicle.VehicleType vehicleType, boolean setInService) {
 
         for(Vehicle vehicle : getConfiguration().getVehicles()){
             if(vehicle.getType() == vehicleType){
@@ -265,7 +279,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                 }
                 currentVehicle = vehicle;
 
-                if(mService != null){
+                if (setInService && mService != null) {
                     mService.vehicleChanged(vehicle);
                 }
 
@@ -315,7 +329,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                     } else if (permissions[0].equals(Manifest.permission.ACCESS_COARSE_LOCATION) || permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
 
                         //location
-                        Toast.makeText(getBaseContext(),R.string.permission_location_required, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getBaseContext(), R.string.permission_location_required, Toast.LENGTH_SHORT).show();
                     }
                 }
                 return;
@@ -388,6 +402,33 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         }
     };
 
+        public class MReceiver extends BroadcastReceiver {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                if(intent.getAction().equals(Constants.INTENT_STOP_FROM_SERVICE)){
+
+                    unbindService(mServiceConnection);
+                    //onServiceDisconnected is only called when service crashes, hence nullify service here
+                    mService = null;
+
+                    invalidateOptionsMenu();
+
+                    Fragment currentFragment = getCurrentFragment();
+                    if (currentFragment != null && currentFragment instanceof RecordFragment) {
+                        ((RecordFragment) currentFragment).applySessionState(Session.SessionState.STOPPED);
+                    }
+                }else if(intent.getAction().equals(Constants.INTENT_VEHICLE_UPDATE)){
+
+                    if(mService != null){
+                        Vehicle newVehicle = mService.getCurrentVehicle();
+                        if(newVehicle != null){
+                            changeVehicle(newVehicle.getType(), false);
+                        }
+                    }
+                }
+            }
+        }
     /**
      * checks if a service is running in the system
      * @param context a context
@@ -463,5 +504,14 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             handler = new Handler();
         }
         return handler;
+    }
+
+    public MReceiver getmReceiver() {
+
+        if(mReceiver == null){
+            mReceiver = new MReceiver();
+        }
+
+        return mReceiver;
     }
 }
