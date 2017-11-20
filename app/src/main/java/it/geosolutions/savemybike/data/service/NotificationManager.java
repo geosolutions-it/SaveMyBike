@@ -77,6 +77,52 @@ public class NotificationManager extends BroadcastReceiver {
         return null;
     }
 
+    public void updateNotification(final String message, Vehicle vehicle) {
+
+        this.mCurrentMessage = message;
+        this.mVehicle = vehicle;
+
+        final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mService);
+        int modeSrc = R.drawable.ic_directions_bike;
+
+
+        switch (mVehicle.getType()) {
+
+            case FOOT:
+                modeSrc = R.drawable.ic_directions_walk;
+                break;
+            case BIKE:
+                modeSrc = R.drawable.ic_directions_bike;
+                break;
+            case BUS:
+                modeSrc = R.drawable.ic_directions_bus;
+                break;
+            case CAR:
+                modeSrc = R.drawable.ic_directions_car;
+                break;
+        }
+
+        NotificationCompat.Action modeAction = new NotificationCompat.Action.Builder(modeSrc, mService.getString(R.string.mode), mModeIntent).build();
+        NotificationCompat.Action stopAction = new NotificationCompat.Action.Builder(R.drawable.ic_stop, mService.getString(R.string.stop), mStopIntent).build();
+
+        notificationBuilder
+                .addAction(modeAction)
+                .addAction(stopAction)
+                .setPriority(Notification.PRIORITY_MAX)
+                .setWhen(0)
+                .setStyle(new NotificationCompat.MediaStyle()
+                        .setShowActionsInCompactView(0,1))
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(createContentIntent())
+                .setContentTitle(mCurrentMessage)
+                .setContentText(mService.getSessionLogic().getVehicle().getType().name());
+
+        mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
+
+    }
+
 
     /**
      * Removes the notification and stops tracking the session. If the session
@@ -104,7 +150,6 @@ public class NotificationManager extends BroadcastReceiver {
 
             case Constants.NOTIFICATION_UPDATE_MODE:
 
-                stopNotification();
                 // change state
                 int currentType = mVehicle.getType().ordinal();
                 currentType++;

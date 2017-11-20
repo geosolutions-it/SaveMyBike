@@ -154,8 +154,8 @@ public class SaveMyBikeService extends Service {
         if(sessionLogic != null){
             sessionLogic.setVehicle(newVehicle);
         }
-        getNotificationManager().stopNotification();
-        getNotificationManager().startNotification(getResources().getString(R.string.state_started), newVehicle);
+
+        getNotificationManager().updateNotification(getResources().getString(R.string.state_started), newVehicle);
     }
 
     public Vehicle vehicleFromType(int newVehicleType) {
