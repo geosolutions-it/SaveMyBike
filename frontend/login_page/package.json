@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "amazon-cognito-identity-js": "^1.5.0",
+    "babel-polyfill": "^6.26.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2"
   }
