@@ -9,6 +9,9 @@ import React from "react";
 import ReactDOM from "react-dom";
 import appConfig from "./config";
 
+import { authUser } from "./libs/awsLib";
+import { apigClientFactory } from "aws-api-gateway-client"
+
 Config.region = appConfig.region;
 Config.credentials = new CognitoIdentityCredentials({
   IdentityPoolId: appConfig.IdentityPoolId
@@ -19,14 +22,34 @@ const userPool = new CognitoUserPool({
   ClientId: appConfig.ClientId,
 });
 
+
 class SignUpForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       email: '',
       password: '',
-      username: ''
+      username: '',
+      isAuthenticated: false,
+      isAuthenticating: true
     };
+  }
+
+  async componentDidMount() {
+    try {
+      if (await authUser()) {
+        this.userHasAuthenticated(true);
+      }
+    }
+    catch(e) {
+      alert(e);
+    }
+  
+    this.setState({ isAuthenticating: false });
+  }
+    
+  userHasAuthenticated = authenticated => {
+    this.setState({ isAuthenticated: authenticated });
   }
 
   handleEmailChange(e) {
@@ -82,6 +105,47 @@ class SignUpForm extends React.Component {
     })
   }
 
+  handleLogout = event => {
+    this.userHasAuthenticated(false);
+  }
+
+  handleStrucaElBotton = event => {
+    let config = {invokeUrl:'https://tzvlx7065k.execute-api.us-west-2.amazonaws.com'};
+    var apigClient = apigClientFactory.newClient(config);
+    var params = {
+        //This is where any header, path, or querystring request params go. The key is the parameter named as defined in the API
+        //userId: '1234',
+    };
+    // Template syntax follows url-template https://www.npmjs.com/package/url-template
+    var pathTemplate = '/test'
+    var method = 'GET';
+    var additionalParams = {
+        //If there are any unmodeled query parameters or headers that need to be sent with the request you can add them here
+        /*
+        headers: {
+            param0: '',
+            param1: ''
+        },
+        queryParams: {
+            param0: '',
+            param1: ''
+        }
+        */
+    };
+    var body = {
+        //This is where you define the body of the request
+    };
+    
+    apigClient.invokeApi(params, pathTemplate, method, additionalParams, body)
+        .then(function(result){
+            console.log(result);
+            alert(result);
+        }).catch( function(result){
+            console.log(result);
+            alert(result);
+        });
+  }
+
   render() {
     return (
       <div>
@@ -108,6 +172,11 @@ class SignUpForm extends React.Component {
                 onChange={this.handlePasswordChange.bind(this)}/>
           <input type="submit"/>
         </form>
+
+        {this.state.isAuthenticated
+          ? <div><button onClick={this.handleLogout}>Logout</button><br/><button onClick={this.handleStrucaElBotton}>GO!</button></div>
+          : null
+        }
       </div>
     );
   }
