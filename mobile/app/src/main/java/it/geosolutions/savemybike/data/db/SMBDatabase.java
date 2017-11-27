@@ -43,6 +43,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
     private static final String STATE = "state";
     private static final String USER_ID = "user_id";
     private static final String SERVER_ID = "server_id";
+    private static final String TIME_ZONE = "time_zone";
     private static final String LAST_UPLOADED_INDEX = "last_upload_id";
     private static final String LAST_PERSISTED_INDEX = "last_persist_id";
 
@@ -53,14 +54,21 @@ public class SMBDatabase extends SQLiteOpenHelper {
     private static final String TIME = "time";
     private static final String ELEVATION = "elev";
     private static final String TEMPERATURE = "temperature";
-    private static final String BEARING  = "bearing";
+    private static final String GPS_BEARING = "gps_bearing";
     private static final String ACCURACY = "accuracy";
     private static final String SPEED = "speed";
     private static final String PRESSURE = "pressure";
     private static final String BATTERY_LEVEL  = "battery_level";
     private static final String BATTERY_CONSUMPTION  = "battery_cons";
-    private static final String ACCELERATION  = "acc";
-    private static final String ORIENTATION = "orientation";
+    private static final String ACCELERATION_X  = "accX";
+    private static final String ACCELERATION_Y  = "accY";
+    private static final String ACCELERATION_Z  = "accZ";
+    private static final String HUMIDITY = "humidity";
+    private static final String PROXIMITY= "prox";
+    private static final String LIGHT  = "light";
+    private static final String DEVICE_BEARING = "dev_bearing";
+    private static final String DEVICE_ROLL = "dev_roll";
+    private static final String DEVICE_PITCH = "dev_pitch";
 
     //Bikes Table
     private static final String IMAGE_URI = "image_uri";
@@ -76,6 +84,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
                     BIKE_ID + " integer, " +
                     USER_ID + " text, " +
                     STATE + " integer, " +
+                    TIME_ZONE + " text, " +
                     LAST_UPLOADED_INDEX + " integer, " +
                     LAST_PERSISTED_INDEX + " integer, " +
                     NAME + " text);";
@@ -89,14 +98,21 @@ public class SMBDatabase extends SQLiteOpenHelper {
                     LONGITUDE + " float, " +
                     TIME + " long, " +
                     ELEVATION + " float, " +
-                    BEARING + " float, " +
+                    GPS_BEARING + " float, " +
                     ACCURACY + " float, " +
                     SPEED + " float, " +
                     PRESSURE + " float, " +
                     BATTERY_LEVEL + " integer, " +
                     BATTERY_CONSUMPTION + " float, " +
-                    ACCELERATION + " float, " +
-                    ORIENTATION + " integer, " +
+                    ACCELERATION_X + " float, " +
+                    ACCELERATION_Y + " float, " +
+                    ACCELERATION_Z + " float, " +
+                    HUMIDITY + " float, " +
+                    PROXIMITY + " float, " +
+                    LIGHT + " float, " +
+                    DEVICE_BEARING + " float, " +
+                    DEVICE_PITCH + " float, " +
+                    DEVICE_ROLL + " float, " +
                     TEMPERATURE + " float);";
 
     private static final String CREATE_BIKES_TABLE =
@@ -175,6 +191,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         cv.put(NAME, session.getName());
         cv.put(USER_ID, session.getUserId());
         cv.put(SERVER_ID, session.getServerId());
+        cv.put(TIME_ZONE, session.getTimeZone());
         cv.put(LAST_UPLOADED_INDEX, session.getLastUploadedIndex());
         cv.put(LAST_PERSISTED_INDEX, session.getLastPersistedIndex());
 
@@ -197,12 +214,19 @@ public class SMBDatabase extends SQLiteOpenHelper {
         cv.put(ELEVATION, dataPoint.elevation);
         cv.put(TIME, dataPoint.timeStamp);
         cv.put(TEMPERATURE,  dataPoint.temperature);
-        cv.put(BEARING, dataPoint.bearing);
+        cv.put(GPS_BEARING, dataPoint.gps_bearing);
         cv.put(ACCURACY, dataPoint.accuracy);
         cv.put(SPEED, dataPoint.speed);
         cv.put(PRESSURE, dataPoint.pressure);
-        cv.put(ACCELERATION, dataPoint.acceleration);
-        cv.put(ORIENTATION, dataPoint.orientation);
+        cv.put(ACCELERATION_X, dataPoint.accelerationX);
+        cv.put(ACCELERATION_Y, dataPoint.accelerationY);
+        cv.put(ACCELERATION_Z, dataPoint.accelerationZ);
+        cv.put(HUMIDITY, dataPoint.humidity);
+        cv.put(PROXIMITY, dataPoint.proximity);
+        cv.put(LIGHT, dataPoint.lumen);
+        cv.put(DEVICE_BEARING, dataPoint.deviceBearing);
+        cv.put(DEVICE_PITCH, dataPoint.devicePitch);
+        cv.put(DEVICE_ROLL, dataPoint.deviceRoll);
         cv.put(BATTERY_LEVEL, dataPoint.batteryLevel);
         cv.put(BATTERY_CONSUMPTION, dataPoint.batConsumptionPerHour);
 
@@ -251,7 +275,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
      */
     public ArrayList<Session> getAllSessions(){
 
-        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, STATE, LAST_UPLOADED_INDEX, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
+        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, TIME_ZONE, STATE, LAST_UPLOADED_INDEX, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
 
         ArrayList<Session> sessions = new ArrayList<>();
 
@@ -263,6 +287,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
                 String userId   = cursor.getString(cursor.getColumnIndex(USER_ID));
                 String name     = cursor.getString(cursor.getColumnIndex(NAME));
                 String sId      = cursor.getString(cursor.getColumnIndex(SERVER_ID));
+                String tz       = cursor.getString(cursor.getColumnIndex(TIME_ZONE));
                 int bikeId      = cursor.getInt(cursor.getColumnIndex(BIKE_ID));
                 int state       = cursor.getInt(cursor.getColumnIndex(STATE));
                 int lastUpload  = cursor.getInt(cursor.getColumnIndex(LAST_UPLOADED_INDEX));
@@ -270,7 +295,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
 
                 Bike bike = getBike(bikeId);
 
-                Session session = new Session(id, bike, name, userId, sId, state, lastUpload, lastPersist);
+                Session session = new Session(id, bike, name, userId, sId, tz, state, lastUpload, lastPersist);
 
                 ArrayList<DataPoint> dataPoints = getDataPointsForSession(id);
 
@@ -301,14 +326,21 @@ public class SMBDatabase extends SQLiteOpenHelper {
                         LONGITUDE,
                         TIME,
                         ELEVATION,
-                        BEARING,
+                        GPS_BEARING,
                         ACCURACY,
                         SPEED,
                         PRESSURE,
                         BATTERY_LEVEL,
                         BATTERY_CONSUMPTION,
-                        ACCELERATION,
-                        ORIENTATION,
+                        ACCELERATION_X,
+                        ACCELERATION_Y,
+                        ACCELERATION_Z,
+                        HUMIDITY,
+                        PROXIMITY,
+                        LIGHT,
+                        DEVICE_BEARING,
+                        DEVICE_ROLL,
+                        DEVICE_PITCH,
                         TEMPERATURE},
                 SESSION_ID + "=?",
                 new String[]{Long.toString(sessionId)},
@@ -323,17 +355,24 @@ public class SMBDatabase extends SQLiteOpenHelper {
                 double lon  = cursor.getDouble(cursor.getColumnIndex(LONGITUDE));
                 long time   = cursor.getLong(cursor.getColumnIndex(TIME));
                 double elev = cursor.getDouble(cursor.getColumnIndex(ELEVATION));
-                float bear  = cursor.getFloat(cursor.getColumnIndex(BEARING));
+                float bear  = cursor.getFloat(cursor.getColumnIndex(GPS_BEARING));
                 float accu  = cursor.getFloat(cursor.getColumnIndex(ACCURACY));
                 float spd   = cursor.getFloat(cursor.getColumnIndex(SPEED));
                 float press = cursor.getFloat(cursor.getColumnIndex(PRESSURE));
                 int bat_l   = cursor.getInt(cursor.getColumnIndex(BATTERY_LEVEL));
                 float bat_c = cursor.getFloat(cursor.getColumnIndex(BATTERY_CONSUMPTION));
-                float acc   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION));
-                int   orie  = cursor.getInt(cursor.getColumnIndex(ORIENTATION));
+                float accX   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION_X));
+                float accY   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION_Y));
+                float accZ   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION_Z));
+                float hum   = cursor.getFloat(cursor.getColumnIndex(HUMIDITY));
+                float pro   = cursor.getFloat(cursor.getColumnIndex(PROXIMITY));
+                float lgt   = cursor.getFloat(cursor.getColumnIndex(LIGHT));
+                float dBe   = cursor.getFloat(cursor.getColumnIndex(DEVICE_BEARING));
+                float dRo   = cursor.getFloat(cursor.getColumnIndex(DEVICE_ROLL));
+                float dPi   = cursor.getFloat(cursor.getColumnIndex(DEVICE_PITCH));
                 float temp  = cursor.getFloat(cursor.getColumnIndex(TEMPERATURE));
 
-                DataPoint dp = new DataPoint(id, vehicle, lat, lon, time, elev, bear, accu, spd, press, bat_l, bat_c, acc, orie, temp);
+                DataPoint dp = new DataPoint(id, vehicle, lat, lon, time, elev, bear, accu, spd, press, bat_l, bat_c, accX, accY, accZ, hum, pro, lgt, dBe, dRo, dPi, temp);
 
                 dataPoints.add(dp);
 

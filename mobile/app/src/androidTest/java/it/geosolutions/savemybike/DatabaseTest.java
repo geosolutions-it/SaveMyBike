@@ -42,12 +42,13 @@ public class DatabaseTest {
         //1.create and insert a session
         final Vehicle.VehicleType vehicleType = Vehicle.VehicleType.BIKE;
         final Bike currentBike = database.getSelectedBike();
+        final String timeZone = "GMZ";
         assertNotNull(currentBike);
-        final Session testSession = new Session(vehicleType);
+        final Session testSession = new Session(vehicleType, timeZone);
 
         String name = "testSession";
-        final long startTime = System.currentTimeMillis();
 
+        testSession.setName(name);
         testSession.setName(name);
         testSession.setState(Session.SessionState.ACTIVE);
         testSession.setBike(currentBike);
@@ -62,12 +63,20 @@ public class DatabaseTest {
         final double lon = 10.3161126;
         final double elev = 333;
         final float temp = 18f;
-        final float bearing = 2f;
+        final float gps_bearing = 2f;
         final float spd     = 3f;
         final float accuracy = 15f;
         final float pressure = 0.12345f;
-        final float acceleration = 3f;
-        final int orientation = 1;
+        final float acceleration_X = 3f;
+        final float acceleration_Y = 4f;
+        final float acceleration_Z = 5f;
+        final float humidity = 0.1f;
+        final float proximity = 0.2f;
+        final float light = 0.3f;
+        final float dev_bearing = 1.3f;
+        final float dev_roll = 1.4f;
+        final float dev_pitch = 1.5f;
+
         final int bat_l = 99;
         final float bat_c = 15.5f;
 
@@ -76,14 +85,21 @@ public class DatabaseTest {
         dataPoint.longitude = lon;
         dataPoint.elevation = elev;
         dataPoint.temperature = temp;
-        dataPoint.bearing = bearing;
+        dataPoint.gps_bearing = gps_bearing;
         dataPoint.accuracy = accuracy;
         dataPoint.speed = spd;
         dataPoint.pressure = pressure;
         dataPoint.batteryLevel = bat_l;
         dataPoint.batConsumptionPerHour = bat_c;
-        dataPoint.acceleration = acceleration;
-        dataPoint.orientation = orientation;
+        dataPoint.accelerationX = acceleration_X;
+        dataPoint.accelerationY = acceleration_Y;
+        dataPoint.accelerationZ = acceleration_Z;
+        dataPoint.humidity = humidity;
+        dataPoint.proximity = proximity;
+        dataPoint.lumen = light;
+        dataPoint.deviceBearing = dev_bearing;
+        dataPoint.deviceRoll = dev_roll;
+        dataPoint.devicePitch = dev_pitch;
 
         database.insertDataPoint(dataPoint);
 
@@ -97,6 +113,7 @@ public class DatabaseTest {
 
         assertTrue(insertedSession.getName().equals(name));
         assertTrue(insertedSession.getState() == Session.SessionState.ACTIVE);
+        assertTrue(insertedSession.getTimeZone().equals(timeZone));
         assertTrue(insertedSession.getLastPersistedIndex() == 1);
         assertTrue(insertedSession.getLastUploadedIndex() == 0);
 
@@ -112,14 +129,21 @@ public class DatabaseTest {
         assertEquals(insertedDataPoint.longitude, lon, DOUBLE_DELTA);
         assertEquals(insertedDataPoint.elevation, elev);
         assertEquals(insertedDataPoint.temperature, temp);
-        assertEquals(insertedDataPoint.bearing, bearing);
+        assertEquals(insertedDataPoint.gps_bearing, gps_bearing);
         assertEquals(insertedDataPoint.accuracy, accuracy);
         assertEquals(insertedDataPoint.speed, spd);
         assertEquals(insertedDataPoint.pressure, pressure);
         assertEquals(insertedDataPoint.batteryLevel, bat_l);
         assertEquals(insertedDataPoint.batConsumptionPerHour, bat_c);
-        assertEquals(insertedDataPoint.acceleration, acceleration);
-        assertEquals(insertedDataPoint.orientation, orientation);
+        assertEquals(insertedDataPoint.accelerationX, acceleration_X);
+        assertEquals(insertedDataPoint.accelerationY, acceleration_Y);
+        assertEquals(insertedDataPoint.accelerationZ, acceleration_Z);
+        assertEquals(insertedDataPoint.humidity, humidity);
+        assertEquals(insertedDataPoint.proximity, proximity);
+        assertEquals(insertedDataPoint.lumen, light);
+        assertEquals(insertedDataPoint.deviceBearing, dev_bearing);
+        assertEquals(insertedDataPoint.deviceRoll, dev_roll);
+        assertEquals(insertedDataPoint.devicePitch, dev_pitch);
 
         //done, cleanup
 

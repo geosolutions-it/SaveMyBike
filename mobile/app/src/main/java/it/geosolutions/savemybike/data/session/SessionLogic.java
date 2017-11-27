@@ -132,11 +132,9 @@ public class SessionLogic implements IDataProvider {
         session.getCurrentDataPoint().longitude   = newLocation.getLongitude();
         session.getCurrentDataPoint().elevation   = newLocation.getAltitude();
         session.getCurrentDataPoint().accuracy    = newLocation.getAccuracy();
-        session.getCurrentDataPoint().bearing     = newLocation.getBearing();
+        session.getCurrentDataPoint().gps_bearing = newLocation.getBearing();
         session.getCurrentDataPoint().speed       = newLocation.getSpeed();
 
-        //TODO add more props ?
-        session.getCurrentDataPoint().orientation = context.getResources().getConfiguration().orientation;
     }
 
     private Runnable persistanceTask;

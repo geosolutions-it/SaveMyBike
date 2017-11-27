@@ -13,22 +13,28 @@ public class DataPoint {
     public long timeStamp;
 
     //GPS
-    public double latitude = Double.MAX_VALUE;
-    public double longitude = Double.MAX_VALUE;
+    public double latitude = Double.NaN;
+    public double longitude = Double.NaN;
     /**
      * height above the WGS84 ellipsoid in metres
      */
     public double elevation;
     public float accuracy;
-    public float bearing;
+    public float gps_bearing;
     public float speed;
 
     //sensors
     public int batteryLevel;
     public float batConsumptionPerHour;
-    public float acceleration;
-
-    public int orientation;
+    public float accelerationX;
+    public float accelerationY;
+    public float accelerationZ;
+    public float humidity;
+    public float proximity;
+    public float lumen;
+    public float deviceBearing;
+    public float deviceRoll;
+    public float devicePitch;
 
     /**
      * temperature in celsius
@@ -38,7 +44,7 @@ public class DataPoint {
 
     public int mode;
 
-    public DataPoint(long sessionId, long time, int vehicleMode) {
+    public DataPoint(long sessionId, long time,  int vehicleMode) {
 
         this.sessionId = sessionId;
         this.timeStamp = time;
@@ -64,8 +70,15 @@ public class DataPoint {
                      float press,
                      int bat_l,
                      float bat_c,
-                     float acc,
-                     int orie,
+                     float accX,
+                     float accY,
+                     float accZ,
+                     float hum,
+                     float prx,
+                     float lgt,
+                     float deviceBearing,
+                     float deviceRoll,
+                     float devicePitch,
                      float temp) {
 
         this.sessionId = id;
@@ -74,14 +87,21 @@ public class DataPoint {
         this.longitude = lon;
         this.timeStamp = time;
         this.elevation = elev;
-        this.bearing = bear;
+        this.gps_bearing = bear;
         this.accuracy = accu;
         this.speed = spd;
         this.pressure = press;
         this.batteryLevel = bat_l;
         this.batConsumptionPerHour = bat_c;
-        this.acceleration = acc;
-        this.orientation = orie;
+        this.accelerationX = accX;
+        this.accelerationY = accY;
+        this.accelerationZ = accZ;
+        this.humidity = hum;
+        this.proximity = prx;
+        this.lumen = lgt;
+        this.deviceBearing = deviceBearing;
+        this.deviceRoll = deviceRoll;
+        this.devicePitch = devicePitch;
         this.temperature = temp;
 
     }

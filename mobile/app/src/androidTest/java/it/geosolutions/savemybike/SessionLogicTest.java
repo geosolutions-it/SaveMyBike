@@ -60,7 +60,7 @@ public class SessionLogicTest {
         configuration.persistanceInterval = persistInterval;
         final Vehicle.VehicleType vehicleType = Vehicle.VehicleType.BIKE;
         final Vehicle vehicle = new Vehicle(vehicleType, 1000, 0);
-        final Session testSession = new Session(vehicleType);
+        final Session testSession = new Session(vehicleType, "GMZ");
 
         final SessionLogic logic = new SessionLogic(context, testSession, vehicle, configuration);
         logic.setDatabaseName(DatabaseTest.TEST_DATABASE);
@@ -148,7 +148,7 @@ public class SessionLogicTest {
             assertEquals(String.format(Locale.US, "%d : lon should be %.6f is %.6f",i, dataPoints.get(i).longitude, dbSession.getDataPoints().get(i).longitude), dbSession.getDataPoints().get(i).longitude, dataPoints.get(i).longitude, DatabaseTest.DOUBLE_DELTA);
             assertEquals(dbSession.getDataPoints().get(i).elevation, dataPoints.get(i).elevation, DatabaseTest.DOUBLE_DELTA);
             assertEquals(dbSession.getDataPoints().get(i).accuracy, dataPoints.get(i).accuracy, DatabaseTest.DOUBLE_DELTA);
-            assertEquals(dbSession.getDataPoints().get(i).bearing, dataPoints.get(i).bearing, DatabaseTest.DOUBLE_DELTA);
+            assertEquals(dbSession.getDataPoints().get(i).gps_bearing, dataPoints.get(i).gps_bearing, DatabaseTest.DOUBLE_DELTA);
             assertEquals(dbSession.getDataPoints().get(i).speed, dataPoints.get(i).speed, DatabaseTest.DOUBLE_DELTA);
 
         }
@@ -174,7 +174,7 @@ public class SessionLogicTest {
             loc.setLongitude(da.longitude);
             loc.setAltitude(da.elevation);
             loc.setAccuracy(da.accuracy);
-            loc.setBearing(da.bearing);
+            loc.setBearing(da.gps_bearing);
             loc.setSpeed(da.speed);
             loc.setTime(da.timeStamp);
 

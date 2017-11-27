@@ -30,22 +30,25 @@ public class Session {
     private String name;
     private String serverId;
     private String userId;
+    private String timeZone;
 
     private ArrayList<DataPoint> dataPoints;
 
-    public Session(Vehicle.VehicleType currentVehicleType){
+    public Session(Vehicle.VehicleType currentVehicleType, final String timeZone){
 
         this.currentVehicleType = currentVehicleType;
+        this.timeZone = timeZone;
         dataPoints = new ArrayList<>();
         state = SessionState.ACTIVE;
     }
 
-    public Session(long id, Bike bike, String name, String userId, String sId, int state, int lastUpload, int lastPersist) {
+    public Session(long id, Bike bike, String name, String userId, String sId, String timeZone, int state, int lastUpload, int lastPersist) {
         this.id = id;
         this.bike = bike;
         this.name = name;
         this.userId = userId;
         this.serverId = sId;
+        this.timeZone = timeZone;
         this.state = SessionState.values()[state];
         this.lastUploadedIndex = lastUpload;
         this.lastPersistedIndex = lastPersist;
@@ -64,14 +67,21 @@ public class Session {
         copy.latitude = getCurrentDataPoint().latitude;
         copy.longitude = getCurrentDataPoint().longitude;
         copy.mode = getCurrentDataPoint().mode;
-        copy.bearing = getCurrentDataPoint().bearing;
+        copy.gps_bearing = getCurrentDataPoint().gps_bearing;
         copy.accuracy = getCurrentDataPoint().accuracy;
         copy.batConsumptionPerHour = getCurrentDataPoint().batConsumptionPerHour;
         copy.batteryLevel = getCurrentDataPoint().batteryLevel;
         copy.temperature = getCurrentDataPoint().temperature;
         copy.pressure = getCurrentDataPoint().pressure;
-
-        //TODO add additional values
+        copy.lumen = getCurrentDataPoint().lumen;
+        copy.humidity = getCurrentDataPoint().humidity;
+        copy.proximity = getCurrentDataPoint().proximity;
+        copy.accelerationX = getCurrentDataPoint().accelerationX;
+        copy.accelerationY = getCurrentDataPoint().accelerationY;
+        copy.accelerationZ = getCurrentDataPoint().accelerationZ;
+        copy.deviceBearing = getCurrentDataPoint().deviceBearing;
+        copy.deviceRoll = getCurrentDataPoint().deviceRoll;
+        copy.devicePitch = getCurrentDataPoint().devicePitch;
 
         this.currentDataPoint = copy;
     }
@@ -252,5 +262,9 @@ public class Session {
 
     public void setCurrentVehicleType(Vehicle.VehicleType currentVehicleType) {
         this.currentVehicleType = currentVehicleType;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
     }
 }
