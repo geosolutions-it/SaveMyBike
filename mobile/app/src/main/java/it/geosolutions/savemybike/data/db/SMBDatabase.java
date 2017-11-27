@@ -310,6 +310,23 @@ public class SMBDatabase extends SQLiteOpenHelper {
     }
 
     /**
+     * gets all sessions which have not been uploaded yet
+     * @return a list of sessions
+     */
+    public ArrayList<Session> getSessionsToUpload(){
+
+        ArrayList<Session> allSessions = getAllSessions();
+        ArrayList<Session> filtered = new ArrayList<>();
+
+        for(Session session : allSessions){
+            if(session.getLastUploadedIndex() == 0){
+                filtered.add(session);
+            }
+        }
+        return filtered;
+    }
+
+    /**
      * gets all dataPoints for the session @param sessionId
      * @param sessionId the id of the session
      * @return a list of dataPoints

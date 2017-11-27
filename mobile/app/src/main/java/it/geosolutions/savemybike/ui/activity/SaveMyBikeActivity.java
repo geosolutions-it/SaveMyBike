@@ -30,6 +30,7 @@ import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.service.SaveMyBikeService;
+import it.geosolutions.savemybike.data.upload.UploadManager;
 import it.geosolutions.savemybike.model.Configuration;
 import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
@@ -78,6 +79,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         this.currentVehicle = getCurrentVehicleFromConfig();
 
         this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
+
+        new UploadManager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
     }
 
     @Override

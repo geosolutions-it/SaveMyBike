@@ -11,6 +11,13 @@ public class Constants {
     public final static int DEFAULT_PERSISTANCE_INTERVAL = 15000;
     public final static boolean DEFAULT_WIFI_ONLY = true;
 
+    public final static String AWS_REGION    = "us-west-2";
+    public final static String AWS_POOL      = "us-west-2_E1i57PuDf2";
+    public final static String AWS_CLIENT_ID = "69pkdd67bnvko38n9fgftrdt15";
+
+    public final static String AWS_USER = "robert";
+    public final static String AWS_PASS = "password";
+
     public final static long ONE_HOUR = 3600000;
     public final static long ONE_MINUTE = 60000;
 
