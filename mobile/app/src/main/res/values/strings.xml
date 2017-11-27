@@ -11,6 +11,8 @@
     <!-- Notification actions -->
     <string name="mode">Change Mode</string>
     <string name="stop">Stop</string>
+    <string name="menu_simulate">Simulate</string>
+    <string name="menu_wifi">Upload only with Wifi</string>
 
 
 </resources>

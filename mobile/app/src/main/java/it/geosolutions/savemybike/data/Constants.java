@@ -9,6 +9,7 @@ public class Constants {
 
     public final static int DEFAULT_DATA_READ_INTERVAL = 1000;
     public final static int DEFAULT_PERSISTANCE_INTERVAL = 15000;
+    public final static boolean DEFAULT_WIFI_ONLY = true;
 
     public final static long ONE_HOUR = 3600000;
     public final static long ONE_MINUTE = 60000;
@@ -28,6 +29,8 @@ public class Constants {
 
     public static final String INTENT_STOP_FROM_SERVICE = "it.geosolutions.savemybike.stop.from.service";
     public static final String INTENT_VEHICLE_UPDATE    = "it.geosolutions.savemybike.vehicle_update";
+
+    public static final String PREF_WIFI_ONLY_UPLOAD = "it.geosolutions.savemybike.pref.wifi_only";
 
     public final static String UNIT_KMH = "km/h";
     public final static String UNIT_MPH = "mph";

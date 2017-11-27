@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -59,7 +60,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     }
     protected PermissionIntent mPermissionIntent;
 
-    private boolean simulate;
+    private boolean simulate = false;
+    private boolean uploadWithWifiOnly = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +75,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         changeFragment(0);
 
-        currentVehicle = getCurrentVehicleFromConfig();
+        this.currentVehicle = getCurrentVehicleFromConfig();
+
+        this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
     }
 
     @Override
@@ -363,6 +367,10 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             followItem.setChecked(simulate);
             followItem.setIcon(simulate ? android.R.drawable.checkbox_on_background : android.R.drawable.checkbox_off_background);
 
+            MenuItem wifiOnlyItem = menu.findItem(R.id.menu_upload_wifi);
+            wifiOnlyItem.setChecked(uploadWithWifiOnly);
+            wifiOnlyItem.setIcon(uploadWithWifiOnly ? android.R.drawable.checkbox_on_background : android.R.drawable.checkbox_off_background);
+
             return true;
         }else{
             return  super.onCreateOptionsMenu(menu);
@@ -383,6 +391,14 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                 }
                 invalidateOptionsMenu();
                 break;
+            case R.id.menu_upload_wifi:
+
+                uploadWithWifiOnly = !uploadWithWifiOnly;
+                //save this setting
+                PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, uploadWithWifiOnly).apply();
+                invalidateOptionsMenu();
+                break;
+
         }
 
         return super.onOptionsItemSelected(item);
