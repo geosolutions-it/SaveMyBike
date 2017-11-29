@@ -80,7 +80,12 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
 
-        new UploadManager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
+        //for the upload we need the permission to write to the sd card
+        //TODO we may give an explanation for what this is necessary
+        //TODO we may ask the user for upload permission and only then check this sd-permission
+        if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionNecessary(Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionIntent.SD_CARD))) {
+            new UploadManager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
+        }
     }
 
     @Override
@@ -345,12 +350,10 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             //did grant, what did we want to do ?
             switch (mPermissionIntent){
                 case LOCATION:
-
                     startRecording();
-
                     break;
                 case SD_CARD:
-                    //TODO
+                    new UploadManager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
                     break;
 
             }

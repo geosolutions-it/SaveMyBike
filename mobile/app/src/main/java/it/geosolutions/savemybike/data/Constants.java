@@ -18,6 +18,8 @@ public class Constants {
     public final static String AWS_USER = "robert";
     public final static String AWS_PASS = "password";
 
+    public final static String APP_DIR = "SaveMyBike/";
+
     public final static long ONE_HOUR = 3600000;
     public final static long ONE_MINUTE = 60000;
 

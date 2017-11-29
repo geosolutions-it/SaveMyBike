@@ -159,7 +159,6 @@ public class SessionLogic implements IDataProvider {
                     //add a new data point to the list of data-points
 
                     DataPoint newDataPoint = session.getCurrentDataPoint();
-                    newDataPoint.mode = vehicle.getType().ordinal();
 
                     session.getDataPoints().add(newDataPoint);
 

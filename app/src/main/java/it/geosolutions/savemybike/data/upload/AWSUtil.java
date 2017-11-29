@@ -2,6 +2,7 @@ package it.geosolutions.savemybike.data.upload;
 
 import android.content.Context;
 
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Region;
@@ -33,7 +34,7 @@ public class AWSUtil {
     public static TransferUtility getTransferUtility(Context context) {
 
         if (sTransferUtility == null) {
-            sTransferUtility = TransferUtility.builder().s3Client(getS3Client(context.getApplicationContext())).context(context).build();
+            sTransferUtility = TransferUtility.builder().s3Client(getS3Client()).context(context).build();
         }
 
         return sTransferUtility;
@@ -43,15 +44,24 @@ public class AWSUtil {
      * Gets an instance of a S3 client which is constructed using the given
      * Context.
      *
-     * @param context An Context instance.
      * @return A default S3 client.
      */
-    public static AmazonS3Client getS3Client(Context context) {
+    public static AmazonS3Client getS3Client() {
         if (sS3Client == null) {
-            sS3Client = new AmazonS3Client(getCredProvider(context.getApplicationContext()));
+            sS3Client = new AmazonS3Client(getCredentialsProvider());
             sS3Client.setRegion(Region.getRegion(Regions.fromName(Constants.AWS_REGION)));
         }
         return sS3Client;
+    }
+
+    /**
+     * Gets an instance of BasicAWSCredentials which uses the credentials inside this app
+     * This may not be very secure
+     * @return the BasicAWSCredentials
+     */
+    public static BasicAWSCredentials getCredentialsProvider(){
+
+        return new BasicAWSCredentials(Constants.AWS_USER, Constants.AWS_PASS);
     }
 
     /**

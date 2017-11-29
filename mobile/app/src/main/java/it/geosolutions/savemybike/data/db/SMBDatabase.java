@@ -337,7 +337,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
 
         final Cursor cursor = db.query(true,
                 DATA_POINTS_TABLE,
-                new String[]{ID,
+                new String[]{SESSION_ID,
                         VEHICLE,
                         LATITUDE,
                         LONGITUDE,
@@ -366,7 +366,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         if(cursor.getCount() > 0 && cursor.moveToFirst()){
 
             do{
-                long  id    = cursor.getLong(cursor.getColumnIndex(ID));
+                long  sId   = cursor.getLong(cursor.getColumnIndex(SESSION_ID));
                 int vehicle = cursor.getInt(cursor.getColumnIndex(VEHICLE));
                 double lat  = cursor.getDouble(cursor.getColumnIndex(LATITUDE));
                 double lon  = cursor.getDouble(cursor.getColumnIndex(LONGITUDE));
@@ -389,7 +389,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
                 float dPi   = cursor.getFloat(cursor.getColumnIndex(DEVICE_PITCH));
                 float temp  = cursor.getFloat(cursor.getColumnIndex(TEMPERATURE));
 
-                DataPoint dp = new DataPoint(id, vehicle, lat, lon, time, elev, bear, accu, spd, press, bat_l, bat_c, accX, accY, accZ, hum, pro, lgt, dBe, dRo, dPi, temp);
+                DataPoint dp = new DataPoint(sId, vehicle, lat, lon, time, elev, bear, accu, spd, press, bat_l, bat_c, accX, accY, accZ, hum, pro, lgt, dBe, dRo, dPi, temp);
 
                 dataPoints.add(dp);
 

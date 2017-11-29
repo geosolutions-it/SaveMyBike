@@ -34,6 +34,43 @@ public class Session {
 
     private ArrayList<DataPoint> dataPoints;
 
+    /**
+     * reads the fields of this class which are of interest when exporting this session
+     * //TODO this must be updated when the fields to upload change
+     * @return the list of field names
+     */
+    public static ArrayList<String> getFieldNames(){
+
+        ArrayList<String> fieldNames = new ArrayList<>();
+
+        fieldNames.add("userId");
+        fieldNames.add("timeZone");
+        fieldNames.add("name");
+
+        return fieldNames;
+    }
+
+    /**
+     * maps a fields value to a fields name
+     * TODO this must be updated when other fields are added / renamed
+     * @param field the name of the field
+     * @param session the session containing the data
+     * @return the values of the field as String
+     */
+    public static String getValueForFieldName(String field, Session session) {
+
+        switch (field){
+            case "userId":
+                return session.userId;
+            case "timeZone":
+                return session.timeZone;
+            case "name":
+                return session.name;
+           default:
+                return Integer.toString(0);
+        }
+    }
+
     public Session(Vehicle.VehicleType currentVehicleType, final String timeZone){
 
         this.currentVehicleType = currentVehicleType;
@@ -66,7 +103,6 @@ public class Session {
         copy.elevation = getCurrentDataPoint().elevation;
         copy.latitude = getCurrentDataPoint().latitude;
         copy.longitude = getCurrentDataPoint().longitude;
-        copy.mode = getCurrentDataPoint().mode;
         copy.gps_bearing = getCurrentDataPoint().gps_bearing;
         copy.accuracy = getCurrentDataPoint().accuracy;
         copy.batConsumptionPerHour = getCurrentDataPoint().batConsumptionPerHour;

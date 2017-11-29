@@ -1,5 +1,12 @@
 package it.geosolutions.savemybike.model;
 
+import android.util.Log;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+
+import it.geosolutions.savemybike.BuildConfig;
+
 /**
  * Created by Robert Oehler on 26.10.17.
  *
@@ -42,7 +49,87 @@ public class DataPoint {
     public float temperature;
     public float pressure;
 
-    public int mode;
+    /**
+     * reads the fields of this class via reflection
+     * @return the list of field names of this class
+     */
+    public static ArrayList<String> getFieldNames(){
+
+        ArrayList<String> fieldNames = new ArrayList<>();
+        Field[] allFields = DataPoint.class.getDeclaredFields();
+
+        for (Field field : allFields) {
+            if(BuildConfig.DEBUG) {
+                Log.i("DataPoint", "field " + field.getName());
+            }
+            fieldNames.add(field.getName());
+        }
+
+        return fieldNames;
+    }
+
+    /**
+     * maps a fields value to a fields name
+     * TODO this must be updated when the fields are added / renamed
+     * @param field the name of the field
+     * @param dataPoint the dataPoint containing the data
+     * @return the values of the field as String
+     */
+    public static String getValueForFieldName(String field, DataPoint dataPoint) {
+
+        switch (field){
+            case "accelerationX":
+                return Float.toString(dataPoint.accelerationX);
+            case "accelerationY":
+                return Float.toString(dataPoint.accelerationY);
+            case "accelerationZ":
+                return Float.toString(dataPoint.accelerationZ);
+            case "accuracy":
+                return Float.toString(dataPoint.accuracy);
+            case "batConsumptionPerHour":
+                return Float.toString(dataPoint.batConsumptionPerHour);
+            case "batteryLevel":
+                return Float.toString(dataPoint.batteryLevel);
+            case "deviceBearing":
+                return Float.toString(dataPoint.deviceBearing);
+            case "devicePitch":
+                return Float.toString(dataPoint.devicePitch);
+            case "deviceRoll":
+                return Float.toString(dataPoint.deviceRoll);
+            case "elevation":
+                return Double.toString(dataPoint.elevation);
+            case "gps_bearing":
+                return Float.toString(dataPoint.gps_bearing);
+            case "humidity":
+                return Float.toString(dataPoint.humidity);
+            case "latitude":
+                return Double.toString(dataPoint.latitude);
+            case "longitude":
+                return Double.toString(dataPoint.longitude);
+            case "lumen":
+                return Float.toString(dataPoint.lumen);
+            case "pressure":
+                return Float.toString(dataPoint.pressure);
+            case "proximity":
+                return Float.toString(dataPoint.proximity);
+            case "sessionId":
+                return Long.toString(dataPoint.sessionId);
+            case "speed":
+                return Float.toString(dataPoint.speed);
+            case "temperature":
+                return Float.toString(dataPoint.temperature);
+            case "timeStamp":
+                return Long.toString(dataPoint.timeStamp);
+            case "vehicleMode":
+                return Integer.toString(dataPoint.vehicleMode);
+            case "$change":
+                return Integer.toString(0);
+            case "serialVersionUID":
+                return Integer.toString(0);
+            default:
+                return Integer.toString(0);
+        }
+    }
 
     public DataPoint(long sessionId, long time,  int vehicleMode) {
 
