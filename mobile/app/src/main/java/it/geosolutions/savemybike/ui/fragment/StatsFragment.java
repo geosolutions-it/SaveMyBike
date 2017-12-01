@@ -17,6 +17,7 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -74,37 +75,21 @@ public class StatsFragment extends Fragment {
      */
     private void invalidateSessions() {
 
-        new AsyncTask<Void,Void,ArrayList<Session>>(){
-
+        new InvalidateSessionsTask(getActivity(), new InvalidateSessionsCallback() {
             @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
+            public void showProgressView() {
 
                 showProgress(true);
             }
 
             @Override
-            protected ArrayList<Session> doInBackground(Void... voids) {
+            public void hideProgressView() {
 
-                ArrayList<Session> sessions = null;
-                final SMBDatabase database = new SMBDatabase(getActivity());
-                try{
-
-                    database.open();
-                    sessions = database.getAllSessions();
-
-                }finally {
-                    database.close();
-                }
-
-                return sessions;
+                showProgress(false);
             }
 
             @Override
-            protected void onPostExecute(ArrayList<Session> sessions) {
-                super.onPostExecute(sessions);
-
-                showProgress(false);
+            public void done(ArrayList<Session> sessions) {
 
                 double dist = 0, elev = 0;
                 long time = 0;
@@ -127,7 +112,65 @@ public class StatsFragment extends Fragment {
                 adapter.addAll(sessions);
                 adapter.notifyDataSetChanged();
             }
-        }.execute();
+        }).execute();
+    }
+
+    /**
+     * a task to load all sessions from the local database
+     */
+    static class InvalidateSessionsTask extends AsyncTask<Void,Void,ArrayList<Session>>{
+
+        private WeakReference<Context> contextRef;
+        private InvalidateSessionsCallback callback;
+
+        public InvalidateSessionsTask(final Context context, final InvalidateSessionsCallback pCallback){
+
+            this.contextRef = new WeakReference<>(context);
+            this.callback = pCallback;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            if(callback != null) {
+                callback.showProgressView();
+            }
+        }
+
+        @Override
+        protected ArrayList<Session> doInBackground(Void... voids) {
+
+            ArrayList<Session> sessions = null;
+            final SMBDatabase database = new SMBDatabase(contextRef.get());
+            try{
+
+                database.open();
+                sessions = database.getAllSessions();
+
+            }finally {
+                database.close();
+            }
+
+            return sessions;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Session> sessions) {
+            super.onPostExecute(sessions);
+
+            if(callback != null) {
+                callback.hideProgressView();
+                callback.done(sessions);
+            }
+        }
+    }
+
+    interface InvalidateSessionsCallback
+    {
+        void showProgressView();
+        void hideProgressView();
+        void done(ArrayList<Session> sessions);
     }
 
     /**

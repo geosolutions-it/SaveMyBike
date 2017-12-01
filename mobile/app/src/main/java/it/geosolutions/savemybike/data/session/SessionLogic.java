@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import java.lang.ref.WeakReference;
 import java.util.TimerTask;
 
 import it.geosolutions.savemybike.BuildConfig;
@@ -200,9 +201,10 @@ public class SessionLogic implements IDataProvider {
         return persistanceTask;
     }
 
+    /**
+     * persist the current session to the local database
+     */
     public void persistSession() {
-
-        //TODO persist and remember which were persisted
 
         if(session == null){
 
@@ -211,57 +213,92 @@ public class SessionLogic implements IDataProvider {
             return;
         }
 
-        new AsyncTask<Session,Void,Void>(){
+        new PersistTask(context, databaseName, new PersistTaskListener() {
             @Override
-            protected Void doInBackground(Session... sessions) {
+            public void done(boolean success) {
 
-                final Session session = sessions[0];
-
-                SMBDatabase database = databaseName == null ? new SMBDatabase(context) : new SMBDatabase(context, databaseName);
-
-                if(database.open()){
-
-                    if (session.getId() <= 0) {
-                        //this was never inserted
-                        long id = database.insertSession(session, false);
-                        session.setId(id);
-                    } else {
-                        database.insertSession(session, true);
-                    }
-
-                    //persist dataPoints
-                    if (session.getDataPoints() != null) {
-
-                        if(session.getDataPoints().size() > session.getLastPersistedIndex()) {
-                            for (int i = (int) session.getLastPersistedIndex(); i < session.getDataPoints().size(); i++) {
-
-                                final DataPoint dataPoint = session.getDataPoints().get(i);
-                                if (dataPoint.sessionId <= 0) {
-                                    dataPoint.sessionId = session.getId();
-                                }
-                                database.insertDataPoint(dataPoint);
-                            }
-                            session.setLastPersistedIndex(session.getDataPoints().size());
-                            database.insertSession(session, true);
-                            if(BuildConfig.DEBUG) {
-                                Log.d(TAG, "DB : persisted to " + session.getLastPersistedIndex());
-                            }
-                        }
-                    } else {
-                        Log.i(TAG, "dataPoints null");
-                    }
-
+                if(success) {
                     lastSessionPersistTime = System.currentTimeMillis();
-                    database.close();
-                }else{
-                    Log.w(TAG, "could not open db");
                 }
                 getHandler().postDelayed(persistanceTask, persistanceInterval);
-                return null;
             }
-        }.execute(session);
+        }).execute(session);
+    }
 
+    /**
+     * task to persist the current session state to the database
+     */
+    private static class PersistTask extends AsyncTask<Session, Void, Boolean>{
 
+        private WeakReference<Context> contextRef;
+        private String databaseName;
+        private PersistTaskListener listener;
+
+        public PersistTask(Context context, String databaseName, PersistTaskListener listener) {
+            this.contextRef = new WeakReference<>(context);
+            this.databaseName = databaseName;
+            this.listener = listener;
+        }
+
+        @Override
+        protected Boolean doInBackground(Session... sessions) {
+
+            final Session session = sessions[0];
+
+            SMBDatabase database = databaseName == null ? new SMBDatabase(contextRef.get()) : new SMBDatabase(contextRef.get(), databaseName);
+
+            if(database.open()){
+
+                if (session.getId() <= 0) {
+                    //this was never inserted
+                    long id = database.insertSession(session, false);
+                    session.setId(id);
+                } else {
+                    database.insertSession(session, true);
+                }
+
+                //persist dataPoints
+                if (session.getDataPoints() != null) {
+
+                    if(session.getDataPoints().size() > session.getLastPersistedIndex()) {
+                        for (int i = (int) session.getLastPersistedIndex(); i < session.getDataPoints().size(); i++) {
+
+                            final DataPoint dataPoint = session.getDataPoints().get(i);
+                            if (dataPoint.sessionId <= 0) {
+                                dataPoint.sessionId = session.getId();
+                            }
+                            database.insertDataPoint(dataPoint);
+                        }
+                        session.setLastPersistedIndex(session.getDataPoints().size());
+                        database.insertSession(session, true);
+                        if(BuildConfig.DEBUG) {
+                            Log.d(TAG, "DB : persisted to " + session.getLastPersistedIndex());
+                        }
+                    }
+                } else {
+                    Log.i(TAG, "dataPoints null");
+                }
+
+                database.close();
+                return true;
+            }else{
+                Log.w(TAG, "could not open db");
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            super.onPostExecute(success);
+
+            if(listener != null){
+                listener.done(success);
+            }
+        }
+    }
+    interface PersistTaskListener
+    {
+        void done(boolean success);
     }
 
     private Handler getHandler() {
