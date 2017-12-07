@@ -1,6 +1,8 @@
 package it.geosolutions.savemybike.model;
 
 import android.content.Context;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -39,7 +41,24 @@ public class Configuration implements Serializable {
         return vehicles;
     }
 
+    /**
+     * loads the configuration
+     * If a remote configuration was received and saved it is loaded from preferences and returned
+     * otherwise the default config from res/raw is used
+     * @param context a context
+     * @return a Configuration
+     */
     public static Configuration loadConfiguration(final Context context){
+
+        String currentConfig = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREF_CURRENT_CONFIG, null);
+
+        if(currentConfig != null){
+
+            Configuration conf = new Gson().fromJson(currentConfig, Configuration.class);
+            if(conf != null){
+                return conf;
+            }
+        }
 
         Gson gson = new Gson();
         final String jsonConf = loadJSONFromAsset(context);
@@ -56,6 +75,26 @@ public class Configuration implements Serializable {
 
     }
 
+    /**
+     * saves the config @param configuration as json to the preferences of context @param context
+     * @param context a context
+     * @param configuration a configuration to save
+     */
+    public static void saveConfiguration(final Context context, @NonNull final Configuration configuration){
+
+        String json = new Gson().toJson(configuration);
+
+        if(json != null) {
+            PreferenceManager.getDefaultSharedPreferences(context).edit().putString(Constants.PREF_CURRENT_CONFIG, json).apply();
+        }
+
+    }
+
+    /**
+     * loads a file from the apps asset folder
+     * @param context
+     * @return
+     */
     private static String loadJSONFromAsset(final Context context) {
         String json;
         try {

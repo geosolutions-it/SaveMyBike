@@ -53,47 +53,54 @@ public class RetrofitClient {
         this.context = context;
     }
 
-    public void getRemoteConfig(@NonNull final GetConfigCallback callback){
+    /**
+     * get the config from the server
+     * creates a user pool and logs in, acquiring a session token
+     * this token is then used in HTTP get to authenticate and getting the configuration
+     *
+     * @see "http://docs.aws.amazon.com/cognito/latest/developerguide/tutorial-integrating-user-pools-android.html#tutorial-integrating-user-pools-user-sign-in-android"
+     *
+     * @param callback callback for the result
+     */
+    public void getRemoteConfig(@NonNull final GetConfigCallback callback) {
 
-        ClientConfiguration clientConfiguration = new ClientConfiguration();
+        final ClientConfiguration clientConfiguration = new ClientConfiguration();
 
         // Create a CognitoUserPool object to refer to your user pool
-        CognitoUserPool userPool = new CognitoUserPool(context, Constants.AWS_POOL, Constants.AWS_CLIENT_ID_W_SECRET, Constants.AWS_CLIENT_SECRET, clientConfiguration, Regions.US_WEST_2);
+        final CognitoUserPool userPool = new CognitoUserPool(context, Constants.AWS_POOL, Constants.AWS_CLIENT_ID_W_SECRET, Constants.AWS_CLIENT_SECRET, clientConfiguration, Regions.US_WEST_2);
 
-        CognitoUser currentUser = userPool.getCurrentUser();
+        final CognitoUser currentUser = userPool.getCurrentUser();
 
         // Callback handler for the sign-in process
-        AuthenticationHandler authenticationHandler = new AuthenticationHandler() {
+        final AuthenticationHandler authenticationHandler = new AuthenticationHandler() {
 
             @Override
             public void onSuccess(CognitoUserSession userSession, CognitoDevice newDevice) {
 
                 // Get id token from CognitoUserSession.
-                String idToken = userSession.getIdToken().getJWTToken();
+                final String idToken = userSession.getIdToken().getJWTToken();
 
-                Log.i(TAG, "got token "+ idToken);
-
-                Call<Configuration> call = getServices(idToken).getConfig();
+                //do the (retrofit) get call
+                final Call<Configuration> call = getServices(idToken).getConfig();
 
                 try {
-                    Configuration configuration = call.execute().body();
+                    final Configuration configuration = call.execute().body();
 
                     callback.gotConfig(configuration);
 
-                }catch (IOException e){
+                } catch (IOException e) {
                     Log.e(TAG, "error executing getConfig", e);
-                    callback.error("error executing getConfig");
+                    callback.error("io-error executing getConfig");
                 }
             }
 
             @Override
             public void getAuthenticationDetails(AuthenticationContinuation authenticationContinuation, String userId) {
-                // The API needs user sign-in credentials to continue
-                AuthenticationDetails authenticationDetails = new AuthenticationDetails(Constants.AWS_USER, Constants.AWS_PASS, null);
 
+                // The API needs user sign-in credentials to continue
+                final AuthenticationDetails authenticationDetails = new AuthenticationDetails(Constants.AWS_USER, Constants.AWS_PASS, null);
                 // Pass the user sign-in credentials to the continuation
                 authenticationContinuation.setAuthenticationDetails(authenticationDetails);
-
                 // Allow the sign-in to continue
                 authenticationContinuation.continueTask();
             }
@@ -101,24 +108,29 @@ public class RetrofitClient {
             @Override
             public void getMFACode(MultiFactorAuthenticationContinuation multiFactorAuthenticationContinuation) {
 
-                Log.e(TAG, "Multi-factor authentication is required;");
+                callback.error("Multi-factor authentication is required");
             }
 
             @Override
             public void authenticationChallenge(ChallengeContinuation continuation) {
 
-                Log.w(TAG, "authenticationChallenge;");
+                callback.error("authenticationChallenge");
             }
 
             @Override
             public void onFailure(Exception exception) {
                 // Sign-in failed, check exception for the cause
-                Log.e(TAG, "Sign-in failed "+ exception.getMessage());
+                callback.error("sign-in failed " + exception.getMessage());
             }
         };
 
-        // get the current session
-        currentUser.getSession(authenticationHandler);
+        if (currentUser != null) {
+            Log.i(TAG, "requesting session");
+            // get the current session
+            currentUser.getSession(authenticationHandler);
+        }else{
+            callback.error("No current user available");
+        }
     }
 
 

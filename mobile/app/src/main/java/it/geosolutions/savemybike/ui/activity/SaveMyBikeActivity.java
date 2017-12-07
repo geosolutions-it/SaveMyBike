@@ -85,28 +85,46 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
 
-        //load remote config
         if(Util.isOnline(getBaseContext())){
+            //load remote config
 
             new GetRemoteConfigTask(getBaseContext(), new RetrofitClient.GetConfigCallback() {
                 @Override
-                public void gotConfig(Configuration configuration) {
+                public void gotConfig(final Configuration configuration) {
 
-                    if(configuration != null) {
-                        Log.i(TAG, "config downloaded : " + configuration.id);
-                    }else{
-                        Log.e(TAG, "error downloading config ");
-                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
 
-                    //TODO apply this config
+                            if(configuration != null) {
+
+                                if(BuildConfig.DEBUG) {
+                                    Log.i(TAG, "config downloaded : " + configuration.id);
+                                }
+
+                                //save the config
+                                Configuration.saveConfiguration(getBaseContext(), configuration);
+
+                                //update model
+                                SaveMyBikeActivity.this.configuration = configuration;
+                                SaveMyBikeActivity.this.currentVehicle = getCurrentVehicleFromConfig();
+
+                                //invalidate UI
+                                invalidateRecordingUI();
+
+                            }else{
+                                Log.e(TAG, "error downloading config ");
+                            }
+                        }
+                    });
                 }
-
                 @Override
                 public void error(String message) {
                     Log.e(TAG, "error downloading config " + message);
                 }
             }).execute();
-
+        }else{
+            //local config is used
         }
 
         //for the upload we need the permission to write to the sd card
@@ -137,10 +155,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         //when not having an ongoing session, invalidate with the local vehicle
         if(!applyServiceVehicle) {
-            Fragment currentFragment = getCurrentFragment();
-            if (currentFragment != null && currentFragment instanceof RecordFragment) {
-                ((RecordFragment) currentFragment).invalidateUI(currentVehicle);
-            }
+            invalidateRecordingUI();
         }else{
             //otherwise the UI update is done when re-binding to the service in @link onServiceConnected()
         }
@@ -160,6 +175,16 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     }
 
     /**
+     * invalidates the UI of the recording fragment if it is currently visible
+     */
+    private void invalidateRecordingUI(){
+        Fragment currentFragment = getCurrentFragment();
+        if (currentFragment != null && currentFragment instanceof RecordFragment) {
+            ((RecordFragment) currentFragment).invalidateUI(currentVehicle);
+        }
+    }
+
+    /**
      * starts the recording of a session by launching the recording service and binding to it
      */
     public void startRecording() {
@@ -170,7 +195,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             //start service using bindService
             Intent serviceIntent = new Intent(this, SaveMyBikeService.class);
 
-            //TODO configure params
+            //TODO in a future update a session could be continued, pass the sessions id here
+            //passing -1 indicates that a new session is started
             long continueId = -1;
 
             serviceIntent.putExtra(SaveMyBikeService.PARAM_SIMULATE, simulate);

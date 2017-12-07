@@ -45,6 +45,7 @@ public class Constants {
     public static final String INTENT_VEHICLE_UPDATE    = "it.geosolutions.savemybike.vehicle_update";
 
     public static final String PREF_WIFI_ONLY_UPLOAD = "it.geosolutions.savemybike.pref.wifi_only";
+    public static final String PREF_CURRENT_CONFIG= "it.geosolutions.savemybike.pref.config";
 
     public final static String UNIT_KMH = "km/h";
     public final static String UNIT_MPH = "mph";
