@@ -1,4 +1,4 @@
-package it.geosolutions.savemybike.data.upload;
+package it.geosolutions.savemybike.data.server;
 
 import android.util.Log;
 
@@ -37,7 +37,7 @@ public class CSVCreator {
 
         ArrayList<String> fieldNames = Session.getFieldNames();
 
-        File sessionFile = createFile(String.format(Locale.US,"session_%d.txt", session.getId()));
+        File sessionFile = Util.createFile(String.format(Locale.US,"session_%d.txt", session.getId()));
 
         if(sessionFile == null){
             return null;
@@ -84,7 +84,7 @@ public class CSVCreator {
      */
     public String createCSV(final ArrayList<DataPoint> dataPoints, String sessionId){
 
-        File dataPointsFile = createFile(String.format(Locale.US,"dataPoints_%s.txt", sessionId));
+        File dataPointsFile = Util.createFile(String.format(Locale.US,"dataPoints_%s.txt", sessionId));
 
         if(dataPointsFile == null){
             return null;
@@ -118,34 +118,5 @@ public class CSVCreator {
 
 
         return dataPointsFile.getAbsolutePath();
-    }
-
-    /**
-     * creates a file in the apps dir (must be created priorly)
-     *
-     * if the file does not exist it is created, otherwise deleted (overwritten)
-     *
-     * @param fileName name of the file to create
-     * @return the file or null if an error occurred
-     */
-    private File createFile(String fileName){
-
-        File file = new File(Util.getSMBDirectory().getPath() + String.format(Locale.US, "/%s", fileName));
-
-        boolean success = false;
-        if(!file.exists()){
-            try {
-                success = file.createNewFile();
-            } catch (IOException e) {
-                Log.e(TAG, "error creating csv file " + fileName, e);
-            }
-        }else{
-            success = file.delete();
-        }
-        if(success){
-            return file;
-        }else{
-            return null;
-        }
     }
 }

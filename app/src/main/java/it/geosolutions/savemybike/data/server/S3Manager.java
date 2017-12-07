@@ -1,4 +1,4 @@
-package it.geosolutions.savemybike.data.upload;
+package it.geosolutions.savemybike.data.server;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -31,7 +31,7 @@ import it.geosolutions.savemybike.model.Session;
  * Handles uploads
  */
 
-public class UploadManager {
+public class S3Manager {
 
     private final static String TAG = "UploadManager";
 
@@ -45,7 +45,7 @@ public class UploadManager {
     private List<TransferObserver> observers;
 
 
-    public UploadManager(final  Context context, final boolean wifiOnly) {
+    public S3Manager(final Context context, final boolean wifiOnly) {
 
         this.context = context;
         this.wifiOnly = wifiOnly;
@@ -57,7 +57,7 @@ public class UploadManager {
      */
     public void checkForUpload(){
 
-        if(!isOnline()){
+        if(!Util.isOnline(context)){
             Log.w(TAG, "no internet connection, cannot upload anything");
             return;
         }
@@ -93,8 +93,6 @@ public class UploadManager {
      */
     private void uploadSessions(ArrayList<Session> sessionsToUpload) {
 
-        //TODO use
-        transferUtility = AWSUtil.getTransferUtility(context);
 
 
         //sd ready ?
@@ -169,23 +167,6 @@ public class UploadManager {
 
 
     /**
-     * checks if the device is online
-     * @return true if online, false otherwise
-     */
-    private boolean isOnline(){
-
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        try {
-            return cm != null && cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
-
-        } catch (Exception e) {
-            Log.e(TAG, "error achieving online status", e);
-            return false;
-        }
-    }
-
-    /**
      * checks if the current Internet connection is a Wifi connection
      * @return true if Wifi, false otherwise
      */
@@ -206,5 +187,14 @@ public class UploadManager {
             }
         }
         return false;
+    }
+
+    public TransferUtility getTransferUtility() {
+
+        if(transferUtility == null){
+            transferUtility = AWSUtil.getTransferUtility(context);
+        }
+
+        return transferUtility;
     }
 }

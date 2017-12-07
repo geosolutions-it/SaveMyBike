@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,11 +27,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
+
 import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.Constants;
+import it.geosolutions.savemybike.data.Util;
+import it.geosolutions.savemybike.data.server.RetrofitClient;
+import it.geosolutions.savemybike.data.server.S3Manager;
 import it.geosolutions.savemybike.data.service.SaveMyBikeService;
-import it.geosolutions.savemybike.data.upload.UploadManager;
 import it.geosolutions.savemybike.model.Configuration;
 import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
@@ -80,11 +85,37 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
 
+        //load remote config
+        if(Util.isOnline(getBaseContext())){
+
+            new GetRemoteConfigTask(getBaseContext(), new RetrofitClient.GetConfigCallback() {
+                @Override
+                public void gotConfig(Configuration configuration) {
+
+                    if(configuration != null) {
+                        Log.i(TAG, "config downloaded : " + configuration.id);
+                    }else{
+                        Log.e(TAG, "error downloading config ");
+                    }
+
+                    //TODO apply this config
+                }
+
+                @Override
+                public void error(String message) {
+                    Log.e(TAG, "error downloading config " + message);
+                }
+            }).execute();
+
+        }
+
         //for the upload we need the permission to write to the sd card
         //TODO we may give an explanation for what this is necessary
         //TODO we may ask the user for upload permission and only then check this sd-permission
         if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionNecessary(Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionIntent.SD_CARD))) {
-            new UploadManager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
+            final S3Manager s3Manager = new S3Manager(getBaseContext(), uploadWithWifiOnly);
+
+            s3Manager.checkForUpload();
         }
     }
 
@@ -353,7 +384,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                     startRecording();
                     break;
                 case SD_CARD:
-                    new UploadManager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
+                    new S3Manager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
                     break;
 
             }
@@ -489,6 +520,25 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             configuration = Configuration.loadConfiguration(getBaseContext());
         }
         return configuration;
+    }
+
+    private static class GetRemoteConfigTask extends AsyncTask<Void,Void,Void>{
+
+        private WeakReference<Context> contextRef;
+        private RetrofitClient.GetConfigCallback callback;
+
+        GetRemoteConfigTask(final Context context, @NonNull RetrofitClient.GetConfigCallback callback) {
+            this.contextRef = new WeakReference<>(context);
+            this.callback = callback;
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+             RetrofitClient retrofitClient = new RetrofitClient(contextRef.get());
+             retrofitClient.getRemoteConfig(callback);
+             return null;
+        }
     }
 
     /**

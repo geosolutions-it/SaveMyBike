@@ -1,4 +1,4 @@
-package it.geosolutions.savemybike.data.upload;
+package it.geosolutions.savemybike.data.server;
 
 import android.content.Context;
 
@@ -34,7 +34,7 @@ public class AWSUtil {
     public static TransferUtility getTransferUtility(Context context) {
 
         if (sTransferUtility == null) {
-            sTransferUtility = TransferUtility.builder().s3Client(getS3Client()).context(context).build();
+            sTransferUtility = TransferUtility.builder().s3Client(getS3Client()).defaultBucket(Constants.AWS_BUCKET_NAME).context(context).build();
         }
 
         return sTransferUtility;
