@@ -44,8 +44,10 @@ public class Constants {
     public static final String INTENT_STOP_FROM_SERVICE = "it.geosolutions.savemybike.stop.from.service";
     public static final String INTENT_VEHICLE_UPDATE    = "it.geosolutions.savemybike.vehicle_update";
 
-    public static final String PREF_WIFI_ONLY_UPLOAD = "it.geosolutions.savemybike.pref.wifi_only";
-    public static final String PREF_CURRENT_CONFIG= "it.geosolutions.savemybike.pref.config";
+    public static final String PREF_WIFI_ONLY_UPLOAD         = "it.geosolutions.savemybike.pref.wifi_only";
+    public static final String PREF_CURRENT_CONFIG           = "it.geosolutions.savemybike.pref.config";
+    public static final String PREF_CONFIG_TOKEN_EXPIRE_DATE = "it.geosolutions.savemybike.pref.config.expires";
+    public static final String PREF_CONFIG_TOKEN             = "it.geosolutions.savemybike.pref.config.token";
 
     public final static String UNIT_KMH = "km/h";
     public final static String UNIT_MPH = "mph";

@@ -1,6 +1,8 @@
 package it.geosolutions.savemybike.data.server;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -55,14 +57,61 @@ public class RetrofitClient {
 
     /**
      * get the config from the server
-     * creates a user pool and logs in, acquiring a session token
-     * this token is then used in HTTP get to authenticate and getting the configuration
-     *
-     * @see "http://docs.aws.amazon.com/cognito/latest/developerguide/tutorial-integrating-user-pools-android.html#tutorial-integrating-user-pools-user-sign-in-android"
+     * checks if a valid server token is available and uses it to fetch the current config
+     * otherwise or if no token is available acquires a new token
      *
      * @param callback callback for the result
      */
     public void getRemoteConfig(@NonNull final GetConfigCallback callback) {
+
+        //do we have a valid token ?
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        final String oldToken = preferences.getString(Constants.PREF_CONFIG_TOKEN, null);
+        long expires = preferences.getLong(Constants.PREF_CONFIG_TOKEN_EXPIRE_DATE, 0);
+
+
+        if(oldToken != null && System.currentTimeMillis() + Constants.ONE_MINUTE < expires){
+
+            fetchConfig(oldToken, callback);
+
+        }else{
+
+            acquireToken(callback);
+        }
+    }
+
+    /**
+     * fetches the current configuration from the AWS server using @param token for authentication
+     * @param token token to authenticate
+     * @param callback call for the result
+     */
+    private void fetchConfig(@NonNull final String token, @NonNull final GetConfigCallback callback){
+
+        //do the (retrofit) get call
+        final Call<Configuration> call = getServices(token).getConfig();
+
+        try {
+            final Configuration configuration = call.execute().body();
+
+            callback.gotConfig(configuration);
+
+        } catch (IOException e) {
+            Log.e(TAG, "error executing getConfig", e);
+            callback.error("io-error executing getConfig");
+        }
+    }
+
+    /**
+     * acquires a token by accessing the AWS user pool and logging in
+     *
+     * the token is then saved to local prefs for future user
+     * and passed to fetch the actual config
+     *
+     * @see "http://docs.aws.amazon.com/cognito/latest/developerguide/tutorial-integrating-user-pools-android.html#tutorial-integrating-user-pools-user-sign-in-android"
+     *
+     * @param callback for the result of the operation
+     */
+    private void acquireToken(@NonNull final GetConfigCallback callback){
 
         final ClientConfiguration clientConfiguration = new ClientConfiguration();
 
@@ -80,18 +129,13 @@ public class RetrofitClient {
                 // Get id token from CognitoUserSession.
                 final String idToken = userSession.getIdToken().getJWTToken();
 
-                //do the (retrofit) get call
-                final Call<Configuration> call = getServices(idToken).getConfig();
+                long expires = userSession.getIdToken().getExpiration().getTime();
+                SharedPreferences.Editor ed = PreferenceManager.getDefaultSharedPreferences(context).edit();
+                ed.putLong(Constants.PREF_CONFIG_TOKEN_EXPIRE_DATE, expires).apply();
+                ed.putString(Constants.PREF_CONFIG_TOKEN, idToken);
+                ed.apply();
 
-                try {
-                    final Configuration configuration = call.execute().body();
-
-                    callback.gotConfig(configuration);
-
-                } catch (IOException e) {
-                    Log.e(TAG, "error executing getConfig", e);
-                    callback.error("io-error executing getConfig");
-                }
+                fetchConfig(idToken, callback);
             }
 
             @Override
