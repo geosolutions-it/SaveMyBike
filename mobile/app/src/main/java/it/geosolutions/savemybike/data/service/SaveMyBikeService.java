@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.TimeZone;
 
 import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
@@ -256,7 +255,7 @@ public class SaveMyBikeService extends Service {
      */
     private Session createSession(final Vehicle vehicle) {
 
-        final Session session = new Session(vehicle.getType(), TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT));
+        final Session session = new Session(vehicle.getType());
         //insert to database
         final SMBDatabase smbDatabase = new SMBDatabase(getBaseContext());
         try{

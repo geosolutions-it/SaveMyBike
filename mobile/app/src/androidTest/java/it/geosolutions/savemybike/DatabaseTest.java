@@ -42,9 +42,9 @@ public class DatabaseTest {
         //1.create and insert a session
         final Vehicle.VehicleType vehicleType = Vehicle.VehicleType.BIKE;
         final Bike currentBike = database.getSelectedBike();
-        final String timeZone = "GMZ";
+
         assertNotNull(currentBike);
-        final Session testSession = new Session(vehicleType, timeZone);
+        final Session testSession = new Session(vehicleType);
 
         String name = "testSession";
 
@@ -122,7 +122,6 @@ public class DatabaseTest {
 
         assertTrue(insertedSession.getName().equals(name));
         assertTrue(insertedSession.getState() == Session.SessionState.ACTIVE);
-        assertTrue(insertedSession.getTimeZone().equals(timeZone));
         assertTrue(insertedSession.getLastPersistedIndex() == 1);
         assertTrue(insertedSession.isUploaded());
 

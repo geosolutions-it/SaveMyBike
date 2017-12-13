@@ -60,7 +60,7 @@ public class SessionLogicTest {
         configuration.persistanceInterval = persistInterval;
         final Vehicle.VehicleType vehicleType = Vehicle.VehicleType.BIKE;
         final Vehicle vehicle = new Vehicle(vehicleType, 1000, 0);
-        final Session testSession = new Session(vehicleType, "GMZ");
+        final Session testSession = new Session(vehicleType);
 
         final SessionLogic logic = new SessionLogic(context, testSession, vehicle, configuration);
         logic.setDatabaseName(DatabaseTest.TEST_DATABASE);

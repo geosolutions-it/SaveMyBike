@@ -30,7 +30,6 @@ public class Session {
     private String name;
     private String serverId;
     private String userId;
-    private String timeZone;
 
     private ArrayList<DataPoint> dataPoints;
 
@@ -44,7 +43,6 @@ public class Session {
         ArrayList<String> fieldNames = new ArrayList<>();
 
         fieldNames.add("userId");
-        fieldNames.add("timeZone");
         fieldNames.add("name");
 
         return fieldNames;
@@ -62,8 +60,6 @@ public class Session {
         switch (field){
             case "userId":
                 return session.userId;
-            case "timeZone":
-                return session.timeZone;
             case "name":
                 return session.name;
            default:
@@ -71,21 +67,19 @@ public class Session {
         }
     }
 
-    public Session(Vehicle.VehicleType currentVehicleType, final String timeZone){
+    public Session(Vehicle.VehicleType currentVehicleType){
 
         this.currentVehicleType = currentVehicleType;
-        this.timeZone = timeZone;
         dataPoints = new ArrayList<>();
         state = SessionState.ACTIVE;
     }
 
-    public Session(long id, Bike bike, String name, String userId, String sId, String timeZone, int state, boolean uploaded, int lastPersist) {
+    public Session(long id, Bike bike, String name, String userId, String sId, int state, boolean uploaded, int lastPersist) {
         this.id = id;
         this.bike = bike;
         this.name = name;
         this.userId = userId;
         this.serverId = sId;
-        this.timeZone = timeZone;
         this.state = SessionState.values()[state];
         this.isUploaded = uploaded;
         this.lastPersistedIndex = lastPersist;
@@ -298,9 +292,5 @@ public class Session {
 
     public void setCurrentVehicleType(Vehicle.VehicleType currentVehicleType) {
         this.currentVehicleType = currentVehicleType;
-    }
-
-    public String getTimeZone() {
-        return timeZone;
     }
 }
