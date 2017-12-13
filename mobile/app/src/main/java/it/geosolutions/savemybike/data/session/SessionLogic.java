@@ -22,7 +22,7 @@ import it.geosolutions.savemybike.model.Vehicle;
 /**
  * Created by Robert Oehler on 30.10.17.
  *
- * Class which collects the data of a recording and
+ * Class which collects the data during a session and
  * periodically {@link Constants#DEFAULT_DATA_READ_INTERVAL} adds
  * dataPoints of the current data situation to a list
  *

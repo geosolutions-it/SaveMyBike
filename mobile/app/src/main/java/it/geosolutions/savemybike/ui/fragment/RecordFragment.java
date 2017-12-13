@@ -27,6 +27,7 @@ import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 /**
  * Created by Robert Oehler on 25.10.17.
  *
+ * A fragment containing the UI to switch between vehicles, start/stop a session and to show some session stats
  */
 
 public class RecordFragment extends Fragment {
@@ -43,6 +44,10 @@ public class RecordFragment extends Fragment {
 
     private boolean statsHidden = true;
 
+    /**
+     * inflates the view of this fragment and initializes it
+     * @return the inflated view
+     */
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -71,6 +76,13 @@ public class RecordFragment extends Fragment {
         return view;
     }
 
+    /**
+     * invalidates the UI of this fragment by
+     * 1. applying the current session state (active or stopped)
+     * 2. selecting the current vehicle @param vehicle
+     * 3. invalidating session stats if possible/necessary
+     * @param vehicle the current vehicle
+     */
     public void invalidateUI(Vehicle vehicle){
 
         Session session = ((SaveMyBikeActivity) getActivity()).getCurrentSession();
@@ -80,9 +92,33 @@ public class RecordFragment extends Fragment {
             applySessionState(session.getState());
         }
         selectVehicle(vehicle);
-        invalidate(session);
+        invalidateSessionStats(session);
     }
 
+    /**
+     * applies the session state by changing the icon of the record button according to @param state
+     * @param state the current state
+     */
+    public void applySessionState(final Session.SessionState state){
+
+        switch (state){
+
+            case ACTIVE:
+                //switch to "Pause" UI
+                recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_pause));
+                break;
+            case STOPPED:
+                //switch to "Record" UI
+                recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_record));
+                break;
+        }
+    }
+
+    /***
+     * changes the icon of the vehicle @param vehicle to "selected" (white on black)
+     * and the icons of all other vehicles to "unselected" (black on white)
+     * @param vehicle the selected vehicle
+     */
     public void selectVehicle(Vehicle vehicle){
 
         for(int i = 0; i < getModeViews().size(); i++){
@@ -109,6 +145,43 @@ public class RecordFragment extends Fragment {
         }
     }
 
+    /**
+     * invalidates the session stats UI of this fragment with @param session
+     * @param session the session containing the data to invalidate
+     */
+    public void invalidateSessionStats(final Session session){
+
+        if(session != null){
+
+            if(statsHidden){
+                statsRow.setVisibility(View.VISIBLE);
+                statsHidden = false;
+            }
+
+            final double dist = session.getDistance();
+            final long time = session.getOverallTime();
+
+            if(((SaveMyBikeActivity)getActivity()).getConfiguration().metric){
+
+                distTV.setText(String.format(Locale.US,"%.2f %s", dist / 1000f, Constants.UNIT_KM));
+            }else{
+                distTV.setText(String.format(Locale.US,"%.2f %s", dist / 1000f * Constants.KM_TO_MILES, Constants.UNIT_MI));
+            }
+            timeTV.setText(Util.longToTimeString(time));
+
+        }else{
+            if(!statsHidden){
+                statsRow.setVisibility(View.INVISIBLE);
+                statsHidden = true;
+            }
+        }
+    }
+
+    /**
+     * click listener for vehicles and record button
+     * a click on a vehicle changes the vehicle
+     * a click on the record button starts/stops a session
+     */
      private View.OnClickListener modeClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -152,52 +225,15 @@ public class RecordFragment extends Fragment {
         }
     };
 
-    public void applySessionState(final Session.SessionState state){
-
-        switch (state){
-
-            case ACTIVE:
-                //switch to "Pause" UI
-                recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_pause));
-                break;
-            case STOPPED:
-                //switch to "Record" UI
-                recordButton.setImageDrawable(ContextCompat.getDrawable(getActivity(), R.drawable.ic_record));
-                break;
-        }
-    }
+    /**
+     * shows or hides the simulation view
+     * @param simulate
+     */
     public void applySimulate(boolean simulate){
 
         simulateTV.setVisibility(simulate ? View.VISIBLE : View.INVISIBLE);
     }
 
-    public void invalidate(final Session session){
-
-        if(session != null){
-
-            if(statsHidden){
-                statsRow.setVisibility(View.VISIBLE);
-                statsHidden = false;
-            }
-
-            final double dist = session.getDistance();
-            final long time = session.getOverallTime();
-
-            if(((SaveMyBikeActivity)getActivity()).getConfiguration().metric){
-
-                distTV.setText(String.format(Locale.US,"%.2f %s", dist / 1000f, Constants.UNIT_KM));
-            }else{
-                distTV.setText(String.format(Locale.US,"%.2f %s", dist / 1000f * Constants.KM_TO_MILES, Constants.UNIT_MI));
-            }
-            timeTV.setText(Util.longToTimeString(time));
-
-        }else{
-            if(!statsHidden){
-                statsRow.setVisibility(View.INVISIBLE);
-                statsHidden = true;
-            }
-        }
-    }
 
     public ArrayList<View> getModeViews() {
 

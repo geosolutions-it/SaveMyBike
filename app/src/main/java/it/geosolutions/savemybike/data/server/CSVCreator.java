@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.model.DataPoint;
 import it.geosolutions.savemybike.model.Session;
@@ -37,7 +38,7 @@ public class CSVCreator {
 
         ArrayList<String> fieldNames = Session.getFieldNames();
 
-        File sessionFile = Util.createFile(String.format(Locale.US,"session_%d.txt", session.getId()));
+        File sessionFile = Util.createFile(String.format(Locale.US,Constants.SESSION_FILE_NAME, session.getId()));
 
         if(sessionFile == null){
             return null;
@@ -84,7 +85,7 @@ public class CSVCreator {
      */
     public String createCSV(final ArrayList<DataPoint> dataPoints, String sessionId){
 
-        File dataPointsFile = Util.createFile(String.format(Locale.US,"dataPoints_%s.txt", sessionId));
+        File dataPointsFile = Util.createFile(String.format(Locale.US, Constants.DATAPOINTS_FILE_NAME, sessionId));
 
         if(dataPointsFile == null){
             return null;

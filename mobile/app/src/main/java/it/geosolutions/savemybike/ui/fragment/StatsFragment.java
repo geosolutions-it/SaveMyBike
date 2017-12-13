@@ -32,6 +32,7 @@ import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 /**
  * Created by Robert Oehler on 25.10.17.
  *
+ * A fragment showing the stats of the session of the local database
  */
 
 public class StatsFragment extends Fragment {

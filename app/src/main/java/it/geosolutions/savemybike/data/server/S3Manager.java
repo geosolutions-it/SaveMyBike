@@ -6,8 +6,14 @@ import android.net.NetworkInfo;
 import android.os.Environment;
 import android.util.Log;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -15,12 +21,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import it.geosolutions.savemybike.BuildConfig;
+import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.model.Session;
@@ -31,9 +38,9 @@ import it.geosolutions.savemybike.model.Session;
  * Handles uploads
  */
 
-public class S3Manager {
+public class S3Manager implements TransferListener{
 
-    private final static String TAG = "UploadManager";
+    private final static String TAG = "S3Manager";
 
     private Context context;
     private boolean wifiOnly;
@@ -42,8 +49,7 @@ public class S3Manager {
     private TransferUtility transferUtility;
 
     // A List of all transfers
-    private List<TransferObserver> observers;
-
+    private HashMap<Integer, Long> observerMap;
 
     public S3Manager(final Context context, final boolean wifiOnly) {
 
@@ -55,7 +61,7 @@ public class S3Manager {
      * checks if sessions need to be uploaded
      * launches upload if necessary
      */
-    public void checkForUpload(){
+    public void checkUpload(){
 
         if(!Util.isOnline(context)){
             Log.w(TAG, "no internet connection, cannot upload anything");
@@ -93,8 +99,6 @@ public class S3Manager {
      */
     private void uploadSessions(ArrayList<Session> sessionsToUpload) {
 
-
-
         //sd ready ?
         if(!Environment.getExternalStorageDirectory().canWrite()){
             Log.w(TAG, "cannot write to external memory");
@@ -111,19 +115,69 @@ public class S3Manager {
 
         for(Session session : sessionsToUpload){
 
-            String sessionFile = csvCreator.createCSV(session);
+            String sessionFilePatrh = csvCreator.createCSV(session);
 
-            String dataPointsFile = csvCreator.createCSV(session.getDataPoints(), Long.toString(session.getId()));
+            String dataPointsFilePath = csvCreator.createCSV(session.getDataPoints(), Long.toString(session.getId()));
 
+            File zipFile = createZip(String.format(Locale.US,Constants.ZIP_FILE_NAME, session.getId()), dataPointsFilePath);
 
-            //TODO upload CSV
-            //TODO flag to db that the session was uploaded
+            if(zipFile == null || !zipFile.exists()){
+                Log.e(TAG, "error creating zip file");
+                continue;
+            }
 
-            createZip(String.format(Locale.US,"data_%d.zip", session.getId()), dataPointsFile);
+            //upload zip
+            TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, zipFile.getName(), zipFile);
+            observer.setTransferListener(this);
+            getObserverMap().put(observer.getId(), session.getId());
+        }
+    }
 
-            //TODO clean up created files
+    @Override
+    public void onStateChanged(int id, TransferState newState) {
+
+        if(BuildConfig.DEBUG) {
+            Log.i(TAG, "onStateChanged: " + id + ", " + newState.name());
         }
 
+        if(newState == TransferState.COMPLETED){
+
+            if(getObserverMap().containsKey(id)) {
+
+                final long sessionId = getObserverMap().get(id);
+
+                if(BuildConfig.DEBUG) {
+                    Log.i(TAG, "cleaning up for session : " + sessionId);
+                }
+
+                //flag to db that the session was uploaded
+                SMBDatabase database = new SMBDatabase(context);
+
+                if(database.open()) {
+                    database.flagSessionAsUploaded(sessionId);
+                    database.close();
+                }else{
+                    Log.e(TAG, "could not open database");
+                }
+
+                //clean up created files
+                cleanUpFilesForID(sessionId);
+            }
+        }
+    }
+
+    @Override
+    public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
+
+        if(BuildConfig.DEBUG) {
+            Log.v(TAG, String.format("onProgressChanged: %d, total: %d, current: %d", id, bytesTotal, bytesCurrent));
+        }
+    }
+
+    @Override
+    public void onError(int id, Exception ex) {
+
+        Log.e(TAG, "Error uploading " + id, ex);
     }
 
     /**
@@ -132,7 +186,7 @@ public class S3Manager {
      * @param fileToZip the file to zip
      * @return the path to the created file or null if the the operation failed
      */
-    private String createZip(String zipFile, String fileToZip){
+    private File createZip(String zipFile, String fileToZip){
 
         File file = new File(Util.getSMBDirectory().getPath() + String.format(Locale.US, "/%s", zipFile));
 
@@ -162,7 +216,28 @@ public class S3Manager {
            Log.e(TAG, "error zipping "+ fileToZip);
            return null;
         }
-        return file.getAbsolutePath();
+        return file;
+    }
+
+    /**
+     * cleans up the file for the session upload @param sessionId
+     * @param sessionId the id of the session
+     */
+    private void cleanUpFilesForID(long sessionId) {
+
+        File sessionFile = new File(Util.getSMBDirectory().getPath() + String.format(Locale.US, Constants.SESSION_FILE_NAME, sessionId));
+        File dataPointsFile = new File(Util.getSMBDirectory().getPath() + String.format(Locale.US, Constants.DATAPOINTS_FILE_NAME, sessionId));
+        File zipFile = new File(Util.getSMBDirectory().getPath() + String.format(Locale.US, Constants.ZIP_FILE_NAME, sessionId));
+
+        if(sessionFile.exists()){
+            sessionFile.delete();
+        }
+        if(dataPointsFile.exists()){
+            dataPointsFile.delete();
+        }
+        if(zipFile.exists()){
+            zipFile.delete();
+        }
     }
 
 
@@ -189,12 +264,53 @@ public class S3Manager {
         return false;
     }
 
-    public TransferUtility getTransferUtility() {
+    /**
+     * returns the transfer utility- creates it if necessary
+     * @return a TransferUtility instance
+     */
+    private TransferUtility getTransferUtility() {
 
         if(transferUtility == null){
-            transferUtility = AWSUtil.getTransferUtility(context);
+            transferUtility = TransferUtility.builder().s3Client(getS3Client()).defaultBucket(Constants.AWS_BUCKET_NAME).context(context).build();
         }
 
         return transferUtility;
+    }
+
+    /**
+     * Gets an instance of a S3 client which is constructed using the given
+     * Context.
+     *
+     * @return A default S3 client.
+     */
+    private AmazonS3Client getS3Client() {
+
+        AmazonS3Client sS3Client = new AmazonS3Client(getBasicCredentialsProvider());
+        sS3Client.setRegion(Region.getRegion(Regions.fromName(Constants.AWS_REGION)));
+
+        return sS3Client;
+    }
+
+    /**
+     * Gets an instance of BasicAWSCredentials which uses the credentials inside this app
+     * This may not be very secure
+     * @return the BasicAWSCredentials
+     */
+    private BasicAWSCredentials getBasicCredentialsProvider(){
+
+        return new BasicAWSCredentials(Constants.AWS_ACCESS_KEY, Constants.AWS_ACCESS_SECRET);
+    }
+
+    /**
+     * a map to map upload ids to session ids
+     * @return the map
+     */
+    private HashMap<Integer, Long> getObserverMap() {
+
+        if(observerMap == null){
+            observerMap = new HashMap<>();
+        }
+
+        return observerMap;
     }
 }

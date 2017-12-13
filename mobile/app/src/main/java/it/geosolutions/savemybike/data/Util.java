@@ -45,7 +45,7 @@ public class Util {
 
     /**
      * creates if necessary the smb directory
-     * @return
+     * @return if creating the dir was successful
      */
     public static boolean createSMBDirectory(){
 
@@ -61,6 +61,9 @@ public class Util {
 
     }
 
+    /**
+     * @return the app's dir
+     */
     public static File getSMBDirectory(){
 
         return new File(Environment.getExternalStorageDirectory(), Constants.APP_DIR);

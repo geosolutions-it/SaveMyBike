@@ -38,6 +38,7 @@ import retrofit2.http.GET;
 /**
  * Created by Robert Oehler on 07.12.17.
  *
+ * A Retrofit client which connect to a AWS endpoint
  */
 
 public class RetrofitClient {

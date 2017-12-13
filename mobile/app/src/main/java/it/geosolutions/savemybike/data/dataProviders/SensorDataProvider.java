@@ -19,7 +19,7 @@ import it.geosolutions.savemybike.data.service.SaveMyBikeService;
  *
  * Class to read sensor data of the device
  *
- * */
+ */
 
 public class SensorDataProvider implements SensorEventListener, IDataProvider {
 

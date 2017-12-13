@@ -23,10 +23,12 @@ import java.util.List;
 
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.model.Bike;
+import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 
 /**
  * Created by Robert Oehler on 26.10.17.
  *
+ * A fragment showing a list of bikes
  */
 
 public class BikeListFragment extends Fragment {
@@ -39,9 +41,7 @@ public class BikeListFragment extends Fragment {
 
         final ListView listView = view.findViewById(R.id.bikes_list);
 
-        //TODO load bikes
-        final ArrayList<Bike> bikes = new ArrayList<>();
-        bikes.add(new Bike(1, "A default bike"));
+        final ArrayList<Bike> bikes = ((SaveMyBikeActivity) getActivity()).getConfiguration().bikes;
 
         final BikeAdapter bikeAdapter = new BikeAdapter(getActivity(), R.layout.item_bike, bikes);
 
@@ -51,7 +51,6 @@ public class BikeListFragment extends Fragment {
             @Override
             public void onClick(View view) {
 
-
                 Toast.makeText(getActivity(), "Todo : add another bike", Toast.LENGTH_SHORT).show();
             }
         });
@@ -59,6 +58,9 @@ public class BikeListFragment extends Fragment {
         return view;
     }
 
+    /**
+     * adapter for bikes
+     */
     private class BikeAdapter extends ArrayAdapter<Bike>{
 
         private	int resource;

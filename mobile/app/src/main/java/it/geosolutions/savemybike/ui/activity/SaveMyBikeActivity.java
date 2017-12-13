@@ -42,7 +42,11 @@ import it.geosolutions.savemybike.model.Vehicle;
 import it.geosolutions.savemybike.ui.fragment.BikeListFragment;
 import it.geosolutions.savemybike.ui.fragment.RecordFragment;
 import it.geosolutions.savemybike.ui.fragment.StatsFragment;
-
+/**
+ * Created by Robert Oehler on 25.10.17.
+ *
+ * Main activity of the SaveMyBike app
+ */
 public class SaveMyBikeActivity extends AppCompatActivity {
 
     private final static String TAG = "SaveMyBikeActivity";
@@ -72,21 +76,22 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
 
+        //inflate
         setContentView(R.layout.activity_main);
-
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
+        //select the "record" fragment
         changeFragment(0);
 
+        //load the configuration and select the current vehicle
         this.currentVehicle = getCurrentVehicleFromConfig();
 
-        this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
-
+       //when online, update the config from remote
         if(Util.isOnline(getBaseContext())){
-            //load remote config
 
             new GetRemoteConfigTask(getBaseContext(), new RetrofitClient.GetConfigCallback() {
                 @Override
@@ -127,13 +132,19 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             //local config is used
         }
 
-        //for the upload we need the permission to write to the sd card
-        //TODO we may give an explanation for what this is necessary
-        //TODO we may ask the user for upload permission and only then check this sd-permission
-        if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionNecessary(Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionIntent.SD_CARD))) {
-            final S3Manager s3Manager = new S3Manager(getBaseContext(), uploadWithWifiOnly);
+        /*
+         * Check if data can be uploaded
+         *
+         *   //for the upload we need the permission to write to the sd card
+         *  TODO we may give an explanation for what the SD card access is necessary
+         *  TODO we may ask the user for upload permission and only then check this sd-permission
+         */
+        this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
 
-            s3Manager.checkForUpload();
+        if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionNecessary(Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionIntent.SD_CARD))) {
+
+            final S3Manager s3Manager = new S3Manager(getBaseContext(), uploadWithWifiOnly);
+            s3Manager.checkUpload();
         }
     }
 
@@ -141,6 +152,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        //check if a session is active, if so bind to it
         final boolean isServiceRunning = isServiceRunning(getBaseContext(), Constants.SERVICE_NAME);
         if(isServiceRunning){
             bindToService(new Intent(this, SaveMyBikeService.class));
@@ -150,8 +162,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         getHandler().removeCallbacks(mUpdateUITask);
         getHandler().postDelayed(mUpdateUITask, 10);
 
-        registerReceiver(getmReceiver(), new IntentFilter(Constants.INTENT_STOP_FROM_SERVICE));
-        registerReceiver(getmReceiver(), new IntentFilter(Constants.INTENT_VEHICLE_UPDATE));
+        //register receiver
+        registerReceiver(getReceiver(), new IntentFilter(Constants.INTENT_STOP_FROM_SERVICE));
+        registerReceiver(getReceiver(), new IntentFilter(Constants.INTENT_VEHICLE_UPDATE));
 
         //when not having an ongoing session, invalidate with the local vehicle
         if(!applyServiceVehicle) {
@@ -165,13 +178,15 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
+        //unbind the UI from the service
         if(mService != null){
             unbindService(mServiceConnection);
         }
-        //start updating the UI
+        //stop updating the UI
         getHandler().removeCallbacks(mUpdateUITask);
 
-        unregisterReceiver(getmReceiver());
+        //unregister receiver
+        unregisterReceiver(getReceiver());
     }
 
     /**
@@ -195,7 +210,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             //start service using bindService
             Intent serviceIntent = new Intent(this, SaveMyBikeService.class);
 
-            //TODO in a future update a session could be continued, pass the sessions id here
+            //TODO in a future update a session could be continued, pass the session id here
             //passing -1 indicates that a new session is started
             long continueId = -1;
 
@@ -275,6 +290,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * navigation listener to switch between fragments
+     */
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -297,7 +315,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     };
 
     /**
-     * load fragment for index @param position
+     * load fragment (if necessary) for index @param position
      * @param position menu index
      */
     private void changeFragment(int position) {
@@ -308,21 +326,18 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         switch (position){
             case 0:
                 if(currentFragment != null && currentFragment instanceof  RecordFragment){
-                    Log.i(TAG, "already showing record");
                     return;
                 }
                 fragment = new RecordFragment();
                 break;
             case 1:
                 if(currentFragment != null && currentFragment instanceof  StatsFragment){
-                    Log.i(TAG, "already showing stats");
                     return;
                 }
                 fragment = new StatsFragment();
                 break;
             case 2:
                 if(currentFragment != null && currentFragment instanceof  BikeListFragment){
-                    Log.i(TAG, "already showing bike list");
                     return;
                 }
                 fragment = new BikeListFragment();
@@ -333,8 +348,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     }
 
     /**
-     * changes the current vehicle in the configuration and updates the UI if a record fragment is currently visible
+     * changes the current vehicle in the configuration and updates the UI if the record fragment is currently visible
      * @param vehicleType the new vehicle type
+     * @param setInService if to inform the service about the vehicle change
      */
     public void changeVehicle(Vehicle.VehicleType vehicleType, boolean setInService) {
 
@@ -362,7 +378,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
      * ////////////// ANDROID 6 permissions /////////////////
      * checks if the permission @param is granted and if not requests it
      * @param permission the permission to check
-     * @return if a permission is necessary
+     * @return if the permission is necessary
      */
     public boolean permissionNecessary(final String permission, final PermissionIntent intent) {
 
@@ -390,11 +406,12 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         if (PERMISSION_REQUEST == requestCode) {
             if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+
                 //the permission was denied by the user, show a message
                 if(permissions.length > 0) {
                     if (permissions[0].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                         //sdcard
-                        //TODO show a message when external storage was denied ?
+                        //TODO show a message or quit app when external storage (data upload) was denied ?
                     } else if (permissions[0].equals(Manifest.permission.ACCESS_COARSE_LOCATION) || permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
 
                         //location
@@ -404,13 +421,13 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                 return;
             }
 
-            //did grant, what did we want to do ?
+            //user did grant permission, what did we want to do ?
             switch (mPermissionIntent){
                 case LOCATION:
                     startRecording();
                     break;
                 case SD_CARD:
-                    new S3Manager(getBaseContext(), uploadWithWifiOnly).checkForUpload();
+                    new S3Manager(getBaseContext(), uploadWithWifiOnly).checkUpload();
                     break;
 
             }
@@ -467,6 +484,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * task to invalidate the UI, executes itself periodically every UI_UPDATE_INTERVAL
+     */
     private Runnable mUpdateUITask = new Runnable() {
 
         public void run() {
@@ -474,40 +494,48 @@ public class SaveMyBikeActivity extends AppCompatActivity {
             Fragment currentFragment = getCurrentFragment();
             if(currentFragment != null && currentFragment instanceof RecordFragment){
                 Session session = getCurrentSession();
-                ((RecordFragment)currentFragment).invalidate(session);
+                ((RecordFragment)currentFragment).invalidateSessionStats(session);
             }
 
             getHandler().postDelayed(this, UI_UPDATE_INTERVAL);
         }
     };
 
-        public class MReceiver extends BroadcastReceiver {
-            @Override
-            public void onReceive(Context context, Intent intent) {
+    /**
+     * BroadcastReceiver to receive events from Notification
+     */
+    public class MReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
 
-                if(intent.getAction().equals(Constants.INTENT_STOP_FROM_SERVICE)){
+            if(intent.getAction() == null){
+                Log.w(TAG, "unexpected intent action null");
+                return;
+            }
 
-                    unbindService(mServiceConnection);
-                    //onServiceDisconnected is only called when service crashes, hence nullify service here
-                    mService = null;
+            if (intent.getAction().equals(Constants.INTENT_STOP_FROM_SERVICE)) {
 
-                    invalidateOptionsMenu();
+                unbindService(mServiceConnection);
+                //onServiceDisconnected is only called when service crashes, hence nullify service here
+                mService = null;
 
-                    Fragment currentFragment = getCurrentFragment();
-                    if (currentFragment != null && currentFragment instanceof RecordFragment) {
-                        ((RecordFragment) currentFragment).applySessionState(Session.SessionState.STOPPED);
-                    }
-                }else if(intent.getAction().equals(Constants.INTENT_VEHICLE_UPDATE)){
+                invalidateOptionsMenu();
 
-                    if(mService != null){
-                        Vehicle newVehicle = mService.getCurrentVehicle();
-                        if(newVehicle != null){
-                            changeVehicle(newVehicle.getType(), false);
-                        }
+                Fragment currentFragment = getCurrentFragment();
+                if (currentFragment != null && currentFragment instanceof RecordFragment) {
+                    ((RecordFragment) currentFragment).applySessionState(Session.SessionState.STOPPED);
+                }
+            } else if (intent.getAction().equals(Constants.INTENT_VEHICLE_UPDATE)) {
+
+                if (mService != null) {
+                    Vehicle newVehicle = mService.getCurrentVehicle();
+                    if (newVehicle != null) {
+                        changeVehicle(newVehicle.getType(), false);
                     }
                 }
             }
         }
+    }
     /**
      * checks if a service is running in the system
      * @param context a context
@@ -548,6 +576,9 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         return configuration;
     }
 
+    /**
+     * loads the config from remote
+     */
     private static class GetRemoteConfigTask extends AsyncTask<Void,Void,Void>{
 
         private WeakReference<Context> contextRef;
@@ -604,7 +635,7 @@ public class SaveMyBikeActivity extends AppCompatActivity {
         return handler;
     }
 
-    public MReceiver getmReceiver() {
+    public MReceiver getReceiver() {
 
         if(mReceiver == null){
             mReceiver = new MReceiver();

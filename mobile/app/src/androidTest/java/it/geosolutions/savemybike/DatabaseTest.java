@@ -53,6 +53,7 @@ public class DatabaseTest {
         testSession.setState(Session.SessionState.ACTIVE);
         testSession.setBike(currentBike);
         testSession.setLastPersistedIndex(1);
+        testSession.setUploaded(false);
 
         long testId = database.insertSession(testSession, false);
         testSession.setId(testId);
@@ -103,8 +104,16 @@ public class DatabaseTest {
 
         database.insertDataPoint(dataPoint);
 
+        database.flagSessionAsUploaded(testId);
+
+        database.close();
+
+        final SMBDatabase database2 = new SMBDatabase(context, TEST_DATABASE);
+        assertNotNull(database2);
+        assertTrue(database2.open());
+
         //3.read from database
-        final Session insertedSession = database.getSession(testId);
+        final Session insertedSession = database2.getSession(testId);
         assertNotNull(insertedSession);
 
         assertNotNull(insertedSession.getBike());
@@ -115,7 +124,7 @@ public class DatabaseTest {
         assertTrue(insertedSession.getState() == Session.SessionState.ACTIVE);
         assertTrue(insertedSession.getTimeZone().equals(timeZone));
         assertTrue(insertedSession.getLastPersistedIndex() == 1);
-        assertTrue(insertedSession.getLastUploadedIndex() == 0);
+        assertTrue(insertedSession.isUploaded());
 
         assertNotNull(insertedSession.getDataPoints());
         assertTrue(insertedSession.getDataPoints().size() > 0);
@@ -147,7 +156,7 @@ public class DatabaseTest {
 
         //done, cleanup
 
-        database.close();
+        database2.close();
 
         File file = context.getDatabasePath(TEST_DATABASE);
 

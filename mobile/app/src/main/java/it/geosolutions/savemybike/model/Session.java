@@ -26,7 +26,7 @@ public class Session {
 
     private long id;
     private long lastPersistedIndex;
-    private long lastUploadedIndex;
+    private boolean isUploaded;
     private String name;
     private String serverId;
     private String userId;
@@ -79,7 +79,7 @@ public class Session {
         state = SessionState.ACTIVE;
     }
 
-    public Session(long id, Bike bike, String name, String userId, String sId, String timeZone, int state, int lastUpload, int lastPersist) {
+    public Session(long id, Bike bike, String name, String userId, String sId, String timeZone, int state, boolean uploaded, int lastPersist) {
         this.id = id;
         this.bike = bike;
         this.name = name;
@@ -87,7 +87,7 @@ public class Session {
         this.serverId = sId;
         this.timeZone = timeZone;
         this.state = SessionState.values()[state];
-        this.lastUploadedIndex = lastUpload;
+        this.isUploaded = uploaded;
         this.lastPersistedIndex = lastPersist;
     }
 
@@ -288,12 +288,12 @@ public class Session {
         this.lastPersistedIndex = lastPersistedIndex;
     }
 
-    public long getLastUploadedIndex() {
-        return lastUploadedIndex;
+    public boolean isUploaded() {
+        return isUploaded;
     }
 
-    public void setLastUploadedIndex(long lastUploadedIndex) {
-        this.lastUploadedIndex = lastUploadedIndex;
+    public void setUploaded(boolean uploaded) {
+        this.isUploaded = uploaded;
     }
 
     public void setCurrentVehicleType(Vehicle.VehicleType currentVehicleType) {

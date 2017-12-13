@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
+import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.model.Vehicle;
@@ -17,7 +18,10 @@ import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 /**
  * Created by Robert Oehler on 14.11.17.
  *
+ * A manager for the notification shown during a session
  *
+ * Be careful to use android.support.v7.app.NotificationCompat and NOT android.support.v4.app.NotificationCompat
+ * as otherwise notification buttons won't be visible !
  */
 
 public class NotificationManager extends BroadcastReceiver {
@@ -77,6 +81,11 @@ public class NotificationManager extends BroadcastReceiver {
         return null;
     }
 
+    /**
+     * updates the notification with @param message and applies @param vehicle by changing the icon
+     * @param message the message to update
+     * @param vehicle the vehicle to update
+     */
     public void updateNotification(final String message, Vehicle vehicle) {
 
         this.mCurrentMessage = message;
@@ -142,10 +151,25 @@ public class NotificationManager extends BroadcastReceiver {
         }
     }
 
+    /**
+     * receives the pending intent when the user interacts with the notification
+     * @param context a context
+     * @param intent the intent
+     */
     @Override
     public void onReceive(Context context, Intent intent) {
+
         final String action = intent.getAction();
-        Log.d(TAG, "Received intent with action " + action);
+
+        if(action == null){
+            Log.w(TAG, "unexpected intent action null");
+            return;
+        }
+
+        if(BuildConfig.DEBUG) {
+            Log.d(TAG, "Received intent with action " + action);
+        }
+
         switch (action) {
 
             case Constants.NOTIFICATION_UPDATE_MODE:
@@ -156,13 +180,17 @@ public class NotificationManager extends BroadcastReceiver {
                 if(currentType >= Vehicle.VehicleType.values().length){
                     currentType = 0;
                 }
+                //inform service about update
                 mService.vehicleChanged(mService.vehicleFromType(currentType));
+                //inform UI (if available) about update
                 mService.sendBroadcast(new Intent(Constants.INTENT_VEHICLE_UPDATE));
 
                 break;
             case Constants.NOTIFICATION_UPDATE_STOP:
 
+                //inform service about stop
                 mService.stopSession();
+                //inform UI (if available) about stop
                 mService.sendBroadcast(new Intent(Constants.INTENT_STOP_FROM_SERVICE));
 
                 break;
@@ -171,6 +199,10 @@ public class NotificationManager extends BroadcastReceiver {
         }
     }
 
+    /**
+     * creates the notification for the SaveMyBike service
+     * @return the created notification
+     */
     private Notification createNotification(){
 
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mService);
@@ -212,6 +244,11 @@ public class NotificationManager extends BroadcastReceiver {
         return notificationBuilder.build();
     }
 
+    /**
+     * creates the intent which is fired when the notification itself (not the buttons) is clicked
+     * -> will launch the activity
+     * @return the pending intent
+     */
     private PendingIntent createContentIntent() {
         Intent openUI = new Intent(mService, SaveMyBikeActivity.class);
         openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

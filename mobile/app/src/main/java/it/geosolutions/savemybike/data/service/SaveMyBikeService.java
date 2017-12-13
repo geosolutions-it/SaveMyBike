@@ -31,9 +31,9 @@ import it.geosolutions.savemybike.model.Vehicle;
  * It is loosely bound to the UI - activity
  *
  * It starts and stop dataProviders - these provide data to the
- * @link SessionLogic which  collects the data
+ * @link SessionLogic which collects the data
  *
- * During a record a notification is shown to remind the user that an ongoing
+ * During a session a notification is shown to remind the user that an ongoing
  * GPS connection is active
  */
 
@@ -141,6 +141,7 @@ public class SaveMyBikeService extends Service {
      * updates the currently used vehicle :
      * 1. the GPS provider will restart with likely different parameters (if necessary)
      * 2. the session logic is updated to use the new vehicle
+     * 3. the notification is updated
      * @param newVehicle the new vehicle
      */
     public void vehicleChanged(Vehicle newVehicle) {

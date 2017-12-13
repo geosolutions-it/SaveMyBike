@@ -11,6 +11,7 @@ public class Constants {
     public final static int DEFAULT_PERSISTANCE_INTERVAL = 15000;
     public final static boolean DEFAULT_WIFI_ONLY = true;
 
+    public final static String AWS_BUCKET_NAME = "smb-test-lamb";
     public final static String AWS_REGION    = "us-west-2";
     public final static String AWS_POOL      = "us-west-2_glXagvW4j";
     public final static String AWS_CLIENT_ID_WO_SECRET = "5rgu4dnktbi8i9k56biff7t3jf";
@@ -20,10 +21,14 @@ public class Constants {
 
     public final static String AWS_USER = "robert";
     public final static String AWS_PASS = "P@ssw0rd";
-
-    public final static String AWS_BUCKET_NAME = "smb-test-lamb";
+    public final static String AWS_ACCESS_KEY    = "AKIAIW4KJ45YKAZ63OTQ";
+    public final static String AWS_ACCESS_SECRET = "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";
 
     public final static String APP_DIR = "SaveMyBike/";
+
+    public final static String SESSION_FILE_NAME = "session_%d.txt";
+    public final static String DATAPOINTS_FILE_NAME = "dataPoints_%s.txt";
+    public final static String ZIP_FILE_NAME = "data_%d.zip";
 
     public final static long ONE_HOUR = 3600000;
     public final static long ONE_MINUTE = 60000;

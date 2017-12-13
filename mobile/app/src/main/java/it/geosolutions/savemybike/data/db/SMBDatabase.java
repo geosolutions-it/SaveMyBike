@@ -18,6 +18,7 @@ import it.geosolutions.savemybike.model.Session;
 /**
  * Created by Robert Oehler on 09.11.17.
  *
+ * The SMB database
  */
 
 public class SMBDatabase extends SQLiteOpenHelper {
@@ -44,7 +45,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
     private static final String USER_ID = "user_id";
     private static final String SERVER_ID = "server_id";
     private static final String TIME_ZONE = "time_zone";
-    private static final String LAST_UPLOADED_INDEX = "last_upload_id";
+    private static final String UPLOADED = "uploaded";
     private static final String LAST_PERSISTED_INDEX = "last_persist_id";
 
     //DataPoints table
@@ -85,7 +86,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
                     USER_ID + " text, " +
                     STATE + " integer, " +
                     TIME_ZONE + " text, " +
-                    LAST_UPLOADED_INDEX + " integer, " +
+                    UPLOADED + " integer, " +
                     LAST_PERSISTED_INDEX + " integer, " +
                     NAME + " text);";
 
@@ -132,7 +133,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
     }
 
     /**
-     * Constructor for creating a database using the file of @param name
+     * Constructor for creating a database using the file @param name
      * @param context a context
      * @param name file name
      */
@@ -173,6 +174,10 @@ public class SMBDatabase extends SQLiteOpenHelper {
         }
         return true;
     }
+
+    /**
+     * closes this db
+     */
     public void close(){
         try{
             this.db.close();
@@ -181,6 +186,12 @@ public class SMBDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * inserts or updates a session
+     * @param session session to insert/update
+     * @param update true for updating, false for inserting
+     * @return the number of rows affected
+     */
     public long insertSession(final Session session, boolean update){
         ContentValues cv = new ContentValues();
 
@@ -192,7 +203,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         cv.put(USER_ID, session.getUserId());
         cv.put(SERVER_ID, session.getServerId());
         cv.put(TIME_ZONE, session.getTimeZone());
-        cv.put(LAST_UPLOADED_INDEX, session.getLastUploadedIndex());
+        cv.put(UPLOADED, session.isUploaded() ? 1 : 0);
         cv.put(LAST_PERSISTED_INDEX, session.getLastPersistedIndex());
 
         if(update){
@@ -202,6 +213,11 @@ public class SMBDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * inserts a dataPoint
+     * @param dataPoint the dataPoint to insert
+     * @return the number of rows affected
+     */
     public long insertDataPoint(final DataPoint dataPoint){
 
         ContentValues cv = new ContentValues();
@@ -234,6 +250,12 @@ public class SMBDatabase extends SQLiteOpenHelper {
         return db.insert(DATA_POINTS_TABLE, null, cv);
     }
 
+    /**
+     * inserts or updates a bike
+     * @param bike the bike to insert/update
+     * @param update true for updating, false for inserting
+     * @return the number of rows affected
+     */
     public long insertBike(final Bike bike, boolean update){
 
         ContentValues cv = new ContentValues();
@@ -275,7 +297,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
      */
     public ArrayList<Session> getAllSessions(){
 
-        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, TIME_ZONE, STATE, LAST_UPLOADED_INDEX, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
+        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, TIME_ZONE, STATE, UPLOADED, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
 
         ArrayList<Session> sessions = new ArrayList<>();
 
@@ -290,12 +312,13 @@ public class SMBDatabase extends SQLiteOpenHelper {
                 String tz       = cursor.getString(cursor.getColumnIndex(TIME_ZONE));
                 int bikeId      = cursor.getInt(cursor.getColumnIndex(BIKE_ID));
                 int state       = cursor.getInt(cursor.getColumnIndex(STATE));
-                int lastUpload  = cursor.getInt(cursor.getColumnIndex(LAST_UPLOADED_INDEX));
+                int upload      = cursor.getInt(cursor.getColumnIndex(UPLOADED));
                 int lastPersist = cursor.getInt(cursor.getColumnIndex(LAST_PERSISTED_INDEX));
+                boolean uploaded = upload > 0;
 
                 Bike bike = getBike(bikeId);
 
-                Session session = new Session(id, bike, name, userId, sId, tz, state, lastUpload, lastPersist);
+                Session session = new Session(id, bike, name, userId, sId, tz, state, uploaded, lastPersist);
 
                 ArrayList<DataPoint> dataPoints = getDataPointsForSession(id);
 
@@ -319,11 +342,24 @@ public class SMBDatabase extends SQLiteOpenHelper {
         ArrayList<Session> filtered = new ArrayList<>();
 
         for(Session session : allSessions){
-            if(session.getLastUploadedIndex() == 0){
+            if(!session.isUploaded()){
                 filtered.add(session);
             }
         }
         return filtered;
+    }
+
+    /**
+     * flags the session @param sessionId as uploaded
+     * @param sessionId the session to flag
+     */
+    public boolean flagSessionAsUploaded(final long sessionId){
+
+        ContentValues cv = new ContentValues();
+
+        cv.put(UPLOADED, 1);
+
+        return db.update(SESSIONS_TABLE, cv,  ID + "=" + sessionId, null) == 1;
     }
 
     /**

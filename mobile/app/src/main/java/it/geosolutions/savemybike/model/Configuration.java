@@ -50,7 +50,7 @@ public class Configuration implements Serializable {
      */
     public static Configuration loadConfiguration(final Context context){
 
-        String currentConfig = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREF_CURRENT_CONFIG, null);
+        final String currentConfig = PreferenceManager.getDefaultSharedPreferences(context).getString(Constants.PREF_CURRENT_CONFIG, null);
 
         if(currentConfig != null){
 
@@ -60,19 +60,10 @@ public class Configuration implements Serializable {
             }
         }
 
-        Gson gson = new Gson();
+        //load the default config
         final String jsonConf = loadJSONFromAsset(context);
 
-        Configuration configuration = gson.fromJson(jsonConf, Configuration.class);
-
-        if(configuration != null){
-            for(Vehicle  vehicle : configuration.getVehicles()){
-                Log.i("Config","vehicle "+ vehicle.toString());
-            }
-        }
-
-        return configuration;
-
+        return new Gson().fromJson(jsonConf, Configuration.class);
     }
 
     /**
@@ -92,8 +83,8 @@ public class Configuration implements Serializable {
 
     /**
      * loads a file from the apps asset folder
-     * @param context
-     * @return
+     * @param context a context
+     * @return the json
      */
     private static String loadJSONFromAsset(final Context context) {
         String json;
