@@ -26,12 +26,46 @@ public class Session {
 
     private long id;
     private long lastPersistedIndex;
-    private long lastUploadedIndex;
+    private boolean isUploaded;
     private String name;
     private String serverId;
     private String userId;
 
     private ArrayList<DataPoint> dataPoints;
+
+    /**
+     * reads the fields of this class which are of interest when exporting this session
+     * //TODO this must be updated when the fields to upload change
+     * @return the list of field names
+     */
+    public static ArrayList<String> getFieldNames(){
+
+        ArrayList<String> fieldNames = new ArrayList<>();
+
+        fieldNames.add("userId");
+        fieldNames.add("name");
+
+        return fieldNames;
+    }
+
+    /**
+     * maps a fields value to a fields name
+     * TODO this must be updated when other fields are added / renamed
+     * @param field the name of the field
+     * @param session the session containing the data
+     * @return the values of the field as String
+     */
+    public static String getValueForFieldName(String field, Session session) {
+
+        switch (field){
+            case "userId":
+                return session.userId;
+            case "name":
+                return session.name;
+           default:
+                return Integer.toString(0);
+        }
+    }
 
     public Session(Vehicle.VehicleType currentVehicleType){
 
@@ -40,14 +74,14 @@ public class Session {
         state = SessionState.ACTIVE;
     }
 
-    public Session(long id, Bike bike, String name, String userId, String sId, int state, int lastUpload, int lastPersist) {
+    public Session(long id, Bike bike, String name, String userId, String sId, int state, boolean uploaded, int lastPersist) {
         this.id = id;
         this.bike = bike;
         this.name = name;
         this.userId = userId;
         this.serverId = sId;
         this.state = SessionState.values()[state];
-        this.lastUploadedIndex = lastUpload;
+        this.isUploaded = uploaded;
         this.lastPersistedIndex = lastPersist;
     }
 
@@ -63,15 +97,21 @@ public class Session {
         copy.elevation = getCurrentDataPoint().elevation;
         copy.latitude = getCurrentDataPoint().latitude;
         copy.longitude = getCurrentDataPoint().longitude;
-        copy.mode = getCurrentDataPoint().mode;
-        copy.bearing = getCurrentDataPoint().bearing;
+        copy.gps_bearing = getCurrentDataPoint().gps_bearing;
         copy.accuracy = getCurrentDataPoint().accuracy;
         copy.batConsumptionPerHour = getCurrentDataPoint().batConsumptionPerHour;
         copy.batteryLevel = getCurrentDataPoint().batteryLevel;
         copy.temperature = getCurrentDataPoint().temperature;
         copy.pressure = getCurrentDataPoint().pressure;
-
-        //TODO add additional values
+        copy.lumen = getCurrentDataPoint().lumen;
+        copy.humidity = getCurrentDataPoint().humidity;
+        copy.proximity = getCurrentDataPoint().proximity;
+        copy.accelerationX = getCurrentDataPoint().accelerationX;
+        copy.accelerationY = getCurrentDataPoint().accelerationY;
+        copy.accelerationZ = getCurrentDataPoint().accelerationZ;
+        copy.deviceBearing = getCurrentDataPoint().deviceBearing;
+        copy.deviceRoll = getCurrentDataPoint().deviceRoll;
+        copy.devicePitch = getCurrentDataPoint().devicePitch;
 
         this.currentDataPoint = copy;
     }
@@ -242,12 +282,12 @@ public class Session {
         this.lastPersistedIndex = lastPersistedIndex;
     }
 
-    public long getLastUploadedIndex() {
-        return lastUploadedIndex;
+    public boolean isUploaded() {
+        return isUploaded;
     }
 
-    public void setLastUploadedIndex(long lastUploadedIndex) {
-        this.lastUploadedIndex = lastUploadedIndex;
+    public void setUploaded(boolean uploaded) {
+        this.isUploaded = uploaded;
     }
 
     public void setCurrentVehicleType(Vehicle.VehicleType currentVehicleType) {
