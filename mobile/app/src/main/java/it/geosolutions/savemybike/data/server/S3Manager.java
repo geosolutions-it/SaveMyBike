@@ -115,7 +115,7 @@ public class S3Manager implements TransferListener{
 
         for(Session session : sessionsToUpload){
 
-            String sessionFilePatrh = csvCreator.createCSV(session);
+            //String sessionFilePath = csvCreator.createCSV(session);
 
             String dataPointsFilePath = csvCreator.createCSV(session.getDataPoints(), Long.toString(session.getId()));
 
