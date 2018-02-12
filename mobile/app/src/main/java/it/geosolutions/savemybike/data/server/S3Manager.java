@@ -126,8 +126,9 @@ public class S3Manager implements TransferListener{
                 continue;
             }
 
+            // TODO: Build the key in a separate utility, using the Cognito Identity ID instead of the Username
             //upload zip
-            TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, zipFile.getName(), zipFile);
+            TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, "cognito/smb/"+Constants.AWS_USER+"/"+zipFile.getName(), zipFile);
             observer.setTransferListener(this);
             getObserverMap().put(observer.getId(), session.getId());
         }
