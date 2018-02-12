@@ -17,32 +17,34 @@
         android:textColor="@android:color/black"
         android:textSize="24dp">
     </TextView>
+
     <TextView
         android:id="@+id/simulate_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-light"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
+        android:fontFamily="sans-serif-light"
         android:padding="2dp"
         android:text="simulation"
-        android:visibility="gone"
         android:textColor="@android:color/black"
-        android:textSize="12dp"/>
+        android:textSize="12dp"
+        android:visibility="gone"/>
 
     <LinearLayout
         android:id="@+id/mode_parent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@+id/mode_selection"
         android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/mode_row_0"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="0dp"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
+            android:layout_weight=".3"
             android:orientation="horizontal">
 
             <ImageView
@@ -58,17 +60,18 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight=".5"
-                android:padding="10dp"
                 android:background="@drawable/mode_bordered"
+                android:padding="10dp"
                 app:srcCompat="@drawable/ic_directions_bike"/>
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/mode_row_1"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="0dp"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
+            android:layout_weight=".3"
             android:orientation="horizontal">
 
             <ImageView
@@ -76,8 +79,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight=".5"
-                android:padding="10dp"
                 android:background="@drawable/mode_bordered"
+                android:padding="10dp"
                 app:srcCompat="@drawable/ic_directions_bus"/>
 
             <ImageView
@@ -85,57 +88,66 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight=".5"
-                android:padding="10dp"
                 android:background="@drawable/mode_bordered"
+                android:padding="10dp"
                 app:srcCompat="@drawable/ic_directions_car"/>
         </LinearLayout>
-    </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/stats_row"
-        android:layout_width="match_parent"
-        android:layout_above="@+id/record_button"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:orientation="horizontal"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/stats_time"
+        <LinearLayout
+            android:id="@+id/mode_row_2"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="end|center_horizontal"
-            android:fontFamily="sans-serif"
-            android:paddingRight="30dp"
-            android:text="0:01"
-            android:textColor="@android:color/black"
-            android:textSize="24sp"/>
+            android:layout_height="0dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_weight=".4"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/stats_dist"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="start|center_horizontal"
-            android:fontFamily="sans-serif"
-            android:paddingLeft="30dp"
-            android:text="0.12km"
-            android:textColor="@android:color/black"
-            android:textSize="24sp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/stats_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:orientation="horizontal"
+                    android:visibility="invisible"
+                    android:layout_weight=".3">
+
+                    <TextView
+                        android:id="@+id/stats_time"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif"
+                        android:layout_gravity="start|center_vertical"
+                        android:gravity="start|center_horizontal"
+                        android:text="0:01"
+                        android:textColor="@android:color/black"
+                        android:textSize="24sp"/>
+
+                    <TextView
+                        android:id="@+id/stats_dist"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif"
+                        android:layout_gravity="end|center_vertical"
+                        android:gravity="end|center_horizontal"
+                        android:text="0.12km"
+                        android:textColor="@android:color/black"
+                        android:textSize="24sp"/>
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/record_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight=".7"
+                    app:srcCompat="@drawable/ic_record"/>
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/record_button"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerInParent="true"
-        android:layout_marginBottom="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:scaleType="fitXY"
-        app:srcCompat="@drawable/ic_record" />
-
 </RelativeLayout>

@@ -9,6 +9,26 @@ public class Constants {
 
     public final static int DEFAULT_DATA_READ_INTERVAL = 1000;
     public final static int DEFAULT_PERSISTANCE_INTERVAL = 15000;
+    public final static boolean DEFAULT_WIFI_ONLY = true;
+
+    public final static String AWS_BUCKET_NAME = "smb-test-lamb";
+    public final static String AWS_REGION    = "us-west-2";
+    public final static String AWS_POOL      = "us-west-2_glXagvW4j";
+    public final static String AWS_CLIENT_ID_WO_SECRET = "5rgu4dnktbi8i9k56biff7t3jf";
+
+    public final static String AWS_CLIENT_ID_W_SECRET = "1he4dlrhs9aenll11gmfllhvgd";
+    public final static String AWS_CLIENT_SECRET = "131mec34kbuk262oag23q9g85oe3sqjdecg0l2lo5k5gp92po0lu";
+
+    public final static String AWS_USER = "robert";
+    public final static String AWS_PASS = "P@ssw0rd";
+    public final static String AWS_ACCESS_KEY    = "AKIAIW4KJ45YKAZ63OTQ";
+    public final static String AWS_ACCESS_SECRET = "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";
+
+    public final static String APP_DIR = "SaveMyBike/";
+
+    public final static String SESSION_FILE_NAME = "session_%d.txt";
+    public final static String DATAPOINTS_FILE_NAME = "dataPoints_%s.txt";
+    public final static String ZIP_FILE_NAME = "data_%d.zip";
 
     public final static long ONE_HOUR = 3600000;
     public final static long ONE_MINUTE = 60000;
@@ -22,6 +42,17 @@ public class Constants {
     public static final String DEFAULT_SESSION_NAME = "Session";
 
     public static final String SERVICE_NAME = "it.geosolutions.savemybike.data.service.SaveMyBikeService";
+
+    public static final String NOTIFICATION_UPDATE_MODE = "it.geosolutions.savemybike.intent.mode";
+    public static final String NOTIFICATION_UPDATE_STOP = "it.geosolutions.savemybike.intent.stop";
+
+    public static final String INTENT_STOP_FROM_SERVICE = "it.geosolutions.savemybike.stop.from.service";
+    public static final String INTENT_VEHICLE_UPDATE    = "it.geosolutions.savemybike.vehicle_update";
+
+    public static final String PREF_WIFI_ONLY_UPLOAD         = "it.geosolutions.savemybike.pref.wifi_only";
+    public static final String PREF_CURRENT_CONFIG           = "it.geosolutions.savemybike.pref.config";
+    public static final String PREF_CONFIG_TOKEN_EXPIRE_DATE = "it.geosolutions.savemybike.pref.config.expires";
+    public static final String PREF_CONFIG_TOKEN             = "it.geosolutions.savemybike.pref.config.token";
 
     public final static String UNIT_KMH = "km/h";
     public final static String UNIT_MPH = "mph";

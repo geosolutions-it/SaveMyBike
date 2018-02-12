@@ -18,13 +18,14 @@ import it.geosolutions.savemybike.model.Session;
 /**
  * Created by Robert Oehler on 09.11.17.
  *
+ * The SMB database
  */
 
 public class SMBDatabase extends SQLiteOpenHelper {
 
     private final String TAG = "SMDDatabase";
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     static final String DATABASE_NAME = "smbDb.db";
 
@@ -43,7 +44,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
     private static final String STATE = "state";
     private static final String USER_ID = "user_id";
     private static final String SERVER_ID = "server_id";
-    private static final String LAST_UPLOADED_INDEX = "last_upload_id";
+    private static final String UPLOADED = "uploaded";
     private static final String LAST_PERSISTED_INDEX = "last_persist_id";
 
     //DataPoints table
@@ -53,14 +54,21 @@ public class SMBDatabase extends SQLiteOpenHelper {
     private static final String TIME = "time";
     private static final String ELEVATION = "elev";
     private static final String TEMPERATURE = "temperature";
-    private static final String BEARING  = "bearing";
+    private static final String GPS_BEARING = "gps_bearing";
     private static final String ACCURACY = "accuracy";
     private static final String SPEED = "speed";
     private static final String PRESSURE = "pressure";
     private static final String BATTERY_LEVEL  = "battery_level";
     private static final String BATTERY_CONSUMPTION  = "battery_cons";
-    private static final String ACCELERATION  = "acc";
-    private static final String ORIENTATION = "orientation";
+    private static final String ACCELERATION_X  = "accX";
+    private static final String ACCELERATION_Y  = "accY";
+    private static final String ACCELERATION_Z  = "accZ";
+    private static final String HUMIDITY = "humidity";
+    private static final String PROXIMITY= "prox";
+    private static final String LIGHT  = "light";
+    private static final String DEVICE_BEARING = "dev_bearing";
+    private static final String DEVICE_ROLL = "dev_roll";
+    private static final String DEVICE_PITCH = "dev_pitch";
 
     //Bikes Table
     private static final String IMAGE_URI = "image_uri";
@@ -76,7 +84,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
                     BIKE_ID + " integer, " +
                     USER_ID + " text, " +
                     STATE + " integer, " +
-                    LAST_UPLOADED_INDEX + " integer, " +
+                    UPLOADED + " integer, " +
                     LAST_PERSISTED_INDEX + " integer, " +
                     NAME + " text);";
 
@@ -89,14 +97,21 @@ public class SMBDatabase extends SQLiteOpenHelper {
                     LONGITUDE + " float, " +
                     TIME + " long, " +
                     ELEVATION + " float, " +
-                    BEARING + " float, " +
+                    GPS_BEARING + " float, " +
                     ACCURACY + " float, " +
                     SPEED + " float, " +
                     PRESSURE + " float, " +
                     BATTERY_LEVEL + " integer, " +
                     BATTERY_CONSUMPTION + " float, " +
-                    ACCELERATION + " float, " +
-                    ORIENTATION + " integer, " +
+                    ACCELERATION_X + " float, " +
+                    ACCELERATION_Y + " float, " +
+                    ACCELERATION_Z + " float, " +
+                    HUMIDITY + " float, " +
+                    PROXIMITY + " float, " +
+                    LIGHT + " float, " +
+                    DEVICE_BEARING + " float, " +
+                    DEVICE_PITCH + " float, " +
+                    DEVICE_ROLL + " float, " +
                     TEMPERATURE + " float);";
 
     private static final String CREATE_BIKES_TABLE =
@@ -116,7 +131,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
     }
 
     /**
-     * Constructor for creating a database using the file of @param name
+     * Constructor for creating a database using the file @param name
      * @param context a context
      * @param name file name
      */
@@ -137,6 +152,22 @@ public class SMBDatabase extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
         Log.i(TAG, "Upgrading from version " + oldVersion + " to " + newVersion);
+
+        if(oldVersion < 2){
+
+            db.execSQL("alter table sessions ADD COLUMN uploaded integer;");
+            db.execSQL("alter table datapoints ADD COLUMN gps_bearing float;");
+            db.execSQL("alter table datapoints ADD COLUMN accX float;");
+            db.execSQL("alter table datapoints ADD COLUMN accY float;");
+            db.execSQL("alter table datapoints ADD COLUMN accZ float;");
+            db.execSQL("alter table datapoints ADD COLUMN humidity float;");
+            db.execSQL("alter table datapoints ADD COLUMN prox float;");
+            db.execSQL("alter table datapoints ADD COLUMN light float;");
+            db.execSQL("alter table datapoints ADD COLUMN dev_bearing float;");
+            db.execSQL("alter table datapoints ADD COLUMN dev_roll float;");
+            db.execSQL("alter table datapoints ADD COLUMN dev_pitch float;");
+
+        }
     }
 
     /**
@@ -157,6 +188,10 @@ public class SMBDatabase extends SQLiteOpenHelper {
         }
         return true;
     }
+
+    /**
+     * closes this db
+     */
     public void close(){
         try{
             this.db.close();
@@ -165,6 +200,12 @@ public class SMBDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * inserts or updates a session
+     * @param session session to insert/update
+     * @param update true for updating, false for inserting
+     * @return the number of rows affected
+     */
     public long insertSession(final Session session, boolean update){
         ContentValues cv = new ContentValues();
 
@@ -175,7 +216,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
         cv.put(NAME, session.getName());
         cv.put(USER_ID, session.getUserId());
         cv.put(SERVER_ID, session.getServerId());
-        cv.put(LAST_UPLOADED_INDEX, session.getLastUploadedIndex());
+        cv.put(UPLOADED, session.isUploaded() ? 1 : 0);
         cv.put(LAST_PERSISTED_INDEX, session.getLastPersistedIndex());
 
         if(update){
@@ -185,6 +226,11 @@ public class SMBDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * inserts a dataPoint
+     * @param dataPoint the dataPoint to insert
+     * @return the number of rows affected
+     */
     public long insertDataPoint(final DataPoint dataPoint){
 
         ContentValues cv = new ContentValues();
@@ -197,12 +243,19 @@ public class SMBDatabase extends SQLiteOpenHelper {
         cv.put(ELEVATION, dataPoint.elevation);
         cv.put(TIME, dataPoint.timeStamp);
         cv.put(TEMPERATURE,  dataPoint.temperature);
-        cv.put(BEARING, dataPoint.bearing);
+        cv.put(GPS_BEARING, dataPoint.gps_bearing);
         cv.put(ACCURACY, dataPoint.accuracy);
         cv.put(SPEED, dataPoint.speed);
         cv.put(PRESSURE, dataPoint.pressure);
-        cv.put(ACCELERATION, dataPoint.acceleration);
-        cv.put(ORIENTATION, dataPoint.orientation);
+        cv.put(ACCELERATION_X, dataPoint.accelerationX);
+        cv.put(ACCELERATION_Y, dataPoint.accelerationY);
+        cv.put(ACCELERATION_Z, dataPoint.accelerationZ);
+        cv.put(HUMIDITY, dataPoint.humidity);
+        cv.put(PROXIMITY, dataPoint.proximity);
+        cv.put(LIGHT, dataPoint.lumen);
+        cv.put(DEVICE_BEARING, dataPoint.deviceBearing);
+        cv.put(DEVICE_PITCH, dataPoint.devicePitch);
+        cv.put(DEVICE_ROLL, dataPoint.deviceRoll);
         cv.put(BATTERY_LEVEL, dataPoint.batteryLevel);
         cv.put(BATTERY_CONSUMPTION, dataPoint.batConsumptionPerHour);
 
@@ -210,6 +263,12 @@ public class SMBDatabase extends SQLiteOpenHelper {
         return db.insert(DATA_POINTS_TABLE, null, cv);
     }
 
+    /**
+     * inserts or updates a bike
+     * @param bike the bike to insert/update
+     * @param update true for updating, false for inserting
+     * @return the number of rows affected
+     */
     public long insertBike(final Bike bike, boolean update){
 
         ContentValues cv = new ContentValues();
@@ -251,7 +310,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
      */
     public ArrayList<Session> getAllSessions(){
 
-        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, STATE, LAST_UPLOADED_INDEX, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
+        final Cursor cursor = db.query(true, SESSIONS_TABLE,new String[]{ID, SERVER_ID, NAME, BIKE_ID, USER_ID, STATE, UPLOADED, LAST_PERSISTED_INDEX}, null, null, null, null, String.format(Locale.US,"%s DESC", ID), null);
 
         ArrayList<Session> sessions = new ArrayList<>();
 
@@ -265,12 +324,13 @@ public class SMBDatabase extends SQLiteOpenHelper {
                 String sId      = cursor.getString(cursor.getColumnIndex(SERVER_ID));
                 int bikeId      = cursor.getInt(cursor.getColumnIndex(BIKE_ID));
                 int state       = cursor.getInt(cursor.getColumnIndex(STATE));
-                int lastUpload  = cursor.getInt(cursor.getColumnIndex(LAST_UPLOADED_INDEX));
+                int upload      = cursor.getInt(cursor.getColumnIndex(UPLOADED));
                 int lastPersist = cursor.getInt(cursor.getColumnIndex(LAST_PERSISTED_INDEX));
+                boolean uploaded = upload > 0;
 
                 Bike bike = getBike(bikeId);
 
-                Session session = new Session(id, bike, name, userId, sId, state, lastUpload, lastPersist);
+                Session session = new Session(id, bike, name, userId, sId, state, uploaded, lastPersist);
 
                 ArrayList<DataPoint> dataPoints = getDataPointsForSession(id);
 
@@ -285,6 +345,36 @@ public class SMBDatabase extends SQLiteOpenHelper {
     }
 
     /**
+     * gets all sessions which have not been uploaded yet
+     * @return a list of sessions
+     */
+    public ArrayList<Session> getSessionsToUpload(){
+
+        ArrayList<Session> allSessions = getAllSessions();
+        ArrayList<Session> filtered = new ArrayList<>();
+
+        for(Session session : allSessions){
+            if(!session.isUploaded()){
+                filtered.add(session);
+            }
+        }
+        return filtered;
+    }
+
+    /**
+     * flags the session @param sessionId as uploaded
+     * @param sessionId the session to flag
+     */
+    public boolean flagSessionAsUploaded(final long sessionId){
+
+        ContentValues cv = new ContentValues();
+
+        cv.put(UPLOADED, 1);
+
+        return db.update(SESSIONS_TABLE, cv,  ID + "=" + sessionId, null) == 1;
+    }
+
+    /**
      * gets all dataPoints for the session @param sessionId
      * @param sessionId the id of the session
      * @return a list of dataPoints
@@ -295,20 +385,27 @@ public class SMBDatabase extends SQLiteOpenHelper {
 
         final Cursor cursor = db.query(true,
                 DATA_POINTS_TABLE,
-                new String[]{ID,
+                new String[]{SESSION_ID,
                         VEHICLE,
                         LATITUDE,
                         LONGITUDE,
                         TIME,
                         ELEVATION,
-                        BEARING,
+                        GPS_BEARING,
                         ACCURACY,
                         SPEED,
                         PRESSURE,
                         BATTERY_LEVEL,
                         BATTERY_CONSUMPTION,
-                        ACCELERATION,
-                        ORIENTATION,
+                        ACCELERATION_X,
+                        ACCELERATION_Y,
+                        ACCELERATION_Z,
+                        HUMIDITY,
+                        PROXIMITY,
+                        LIGHT,
+                        DEVICE_BEARING,
+                        DEVICE_ROLL,
+                        DEVICE_PITCH,
                         TEMPERATURE},
                 SESSION_ID + "=?",
                 new String[]{Long.toString(sessionId)},
@@ -317,23 +414,30 @@ public class SMBDatabase extends SQLiteOpenHelper {
         if(cursor.getCount() > 0 && cursor.moveToFirst()){
 
             do{
-                long  id    = cursor.getLong(cursor.getColumnIndex(ID));
+                long  sId   = cursor.getLong(cursor.getColumnIndex(SESSION_ID));
                 int vehicle = cursor.getInt(cursor.getColumnIndex(VEHICLE));
                 double lat  = cursor.getDouble(cursor.getColumnIndex(LATITUDE));
                 double lon  = cursor.getDouble(cursor.getColumnIndex(LONGITUDE));
                 long time   = cursor.getLong(cursor.getColumnIndex(TIME));
                 double elev = cursor.getDouble(cursor.getColumnIndex(ELEVATION));
-                float bear  = cursor.getFloat(cursor.getColumnIndex(BEARING));
+                float bear  = cursor.getFloat(cursor.getColumnIndex(GPS_BEARING));
                 float accu  = cursor.getFloat(cursor.getColumnIndex(ACCURACY));
                 float spd   = cursor.getFloat(cursor.getColumnIndex(SPEED));
                 float press = cursor.getFloat(cursor.getColumnIndex(PRESSURE));
                 int bat_l   = cursor.getInt(cursor.getColumnIndex(BATTERY_LEVEL));
                 float bat_c = cursor.getFloat(cursor.getColumnIndex(BATTERY_CONSUMPTION));
-                float acc   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION));
-                int   orie  = cursor.getInt(cursor.getColumnIndex(ORIENTATION));
+                float accX   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION_X));
+                float accY   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION_Y));
+                float accZ   = cursor.getFloat(cursor.getColumnIndex(ACCELERATION_Z));
+                float hum   = cursor.getFloat(cursor.getColumnIndex(HUMIDITY));
+                float pro   = cursor.getFloat(cursor.getColumnIndex(PROXIMITY));
+                float lgt   = cursor.getFloat(cursor.getColumnIndex(LIGHT));
+                float dBe   = cursor.getFloat(cursor.getColumnIndex(DEVICE_BEARING));
+                float dRo   = cursor.getFloat(cursor.getColumnIndex(DEVICE_ROLL));
+                float dPi   = cursor.getFloat(cursor.getColumnIndex(DEVICE_PITCH));
                 float temp  = cursor.getFloat(cursor.getColumnIndex(TEMPERATURE));
 
-                DataPoint dp = new DataPoint(id, vehicle, lat, lon, time, elev, bear, accu, spd, press, bat_l, bat_c, acc, orie, temp);
+                DataPoint dp = new DataPoint(sId, vehicle, lat, lon, time, elev, bear, accu, spd, press, bat_l, bat_c, accX, accY, accZ, hum, pro, lgt, dBe, dRo, dPi, temp);
 
                 dataPoints.add(dp);
 
