@@ -222,6 +222,10 @@ public class SMBDatabase extends SQLiteOpenHelper {
         if(update){
             return db.update(SESSIONS_TABLE, cv,  ID + "=" + session.getId(), null);
         }else{
+            // Use the current milliseconds as the ID
+            // TODO: Rewrite the database model to use GUID-like IDs
+            cv.put(ID, System.currentTimeMillis());
+
             return db.insert(SESSIONS_TABLE, null, cv);
         }
     }
