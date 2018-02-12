@@ -25,7 +25,7 @@ public class SMBDatabase extends SQLiteOpenHelper {
 
     private final String TAG = "SMDDatabase";
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     static final String DATABASE_NAME = "smbDb.db";
 
@@ -152,6 +152,22 @@ public class SMBDatabase extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
         Log.i(TAG, "Upgrading from version " + oldVersion + " to " + newVersion);
+
+        if(oldVersion < 2){
+
+            db.execSQL("alter table sessions ADD COLUMN uploaded integer;");
+            db.execSQL("alter table datapoints ADD COLUMN gps_bearing float;");
+            db.execSQL("alter table datapoints ADD COLUMN accX float;");
+            db.execSQL("alter table datapoints ADD COLUMN accY float;");
+            db.execSQL("alter table datapoints ADD COLUMN accZ float;");
+            db.execSQL("alter table datapoints ADD COLUMN humidity float;");
+            db.execSQL("alter table datapoints ADD COLUMN prox float;");
+            db.execSQL("alter table datapoints ADD COLUMN light float;");
+            db.execSQL("alter table datapoints ADD COLUMN dev_bearing float;");
+            db.execSQL("alter table datapoints ADD COLUMN dev_roll float;");
+            db.execSQL("alter table datapoints ADD COLUMN dev_pitch float;");
+
+        }
     }
 
     /**
