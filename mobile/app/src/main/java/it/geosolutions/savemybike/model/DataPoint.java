@@ -59,10 +59,13 @@ public class DataPoint {
         Field[] allFields = DataPoint.class.getDeclaredFields();
 
         for (Field field : allFields) {
-            if(BuildConfig.DEBUG) {
-                Log.i("DataPoint", "field " + field.getName());
+            // Skip generated fields
+            if (!field.isSynthetic()){
+                if(BuildConfig.DEBUG) {
+                    Log.i("DataPoint", "field " + field.getName());
+                }
+                fieldNames.add(field.getName());
             }
-            fieldNames.add(field.getName());
         }
 
         return fieldNames;
