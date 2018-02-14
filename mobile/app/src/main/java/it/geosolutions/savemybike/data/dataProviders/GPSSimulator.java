@@ -3,6 +3,7 @@ package it.geosolutions.savemybike.data.dataProviders;
 import android.location.Location;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import it.geosolutions.savemybike.data.service.SaveMyBikeService;
 import it.geosolutions.savemybike.data.session.SessionLogic;
@@ -22,12 +23,12 @@ public class GPSSimulator implements IDataProvider {
        LIMITLESS
     }
 
-    private SimulationMode currentMode = SimulationMode.TEST_RIDE;
+    private SimulationMode currentMode = SimulationMode.LIMITLESS;
 
     /**
      * speed
      */
-    private static int SIMULATION_INTERVAL = 1000;
+    private static int SIMULATION_INTERVAL = 800;
     private static final int START_THRESHOLD = 2000;
 
     private static final float SIM_MOVE_SPEED_IN_MS = 6f;
@@ -89,15 +90,23 @@ public class GPSSimulator implements IDataProvider {
             case LIMITLESS:
 
                 locations = new ArrayList<>();
+                Random rnd = new Random();
 
-                double baseLat = 52.563008;
-                double baseLon = 13.402869;
-                double offset  = 0.0001d;
+                double lat = 43.706763 + rnd.nextInt(2861)*0.00001;
+                double lon = 10.388031 + rnd.nextInt(3915)*0.00001;
+                int dx = ((rnd.nextInt(2) - 1)<0 ) ? -1 : 1;
+                int dy = ((rnd.nextInt(2) - 1)<0 ) ? -1 : 1;
+
+                double xoffset = (rnd.nextInt(5) + 1) * 0.0001d;
+                double yoffset = (rnd.nextInt(5) + 1) * 0.0001d;
+
+                xoffset *= dx;
+                yoffset *= dy;
 
                 for(int i = 0; i < 10000; i++){
 
-                    double lat = baseLat + i * offset;
-                    double lon = baseLon + i * offset;
+                    lat += yoffset;
+                    lon += xoffset;
 
                     locations.add(new DataPoint(sessionLogic.getSession().getId(), System.currentTimeMillis(), sessionLogic.getVehicle().getType().ordinal(), lat, lon));
                 }
