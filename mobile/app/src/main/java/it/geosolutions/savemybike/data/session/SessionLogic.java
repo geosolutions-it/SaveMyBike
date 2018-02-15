@@ -161,11 +161,13 @@ public class SessionLogic implements IDataProvider {
 
                     DataPoint newDataPoint = session.getCurrentDataPoint();
 
-                    session.getDataPoints().add(newDataPoint);
-
-//                    if(BuildConfig.DEBUG){
-//                        Log.i(TAG, String.format(Locale.US,"did add data point %d vehicle %d lat %.4f lon %.4f", session.getDataPoints().size(), newDataPoint.vehicleMode, newDataPoint.latitude, newDataPoint.longitude));
-//                    }
+                    // Do not add datapoints without coordinates
+                    if( !Double.isNaN(newDataPoint.latitude)){
+                        session.getDataPoints().add(newDataPoint);
+//                        if(BuildConfig.DEBUG){
+//                            Log.i(TAG, String.format(Locale.US,"did add data point %d vehicle %d lat %.4f lon %.4f", session.getDataPoints().size(), newDataPoint.vehicleMode, newDataPoint.latitude, newDataPoint.longitude));
+//                        }
+                    }
 
                     session.deepCopyCurrentDataPoint();
 
