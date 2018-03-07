@@ -62,3 +62,8 @@ freeline_project_description.json
 # Node Modules
 node_modules/
 dist/
+
+# Eclipse project files
+.classpath
+.project
+.settings/
