@@ -15,8 +15,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
+import butterknife.BindView;
+import butterknife.BindViews;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
@@ -34,13 +39,18 @@ public class RecordFragment extends Fragment {
 
     private final static String TAG = "RecordFragment";
 
-    private ArrayList<View> modeViews;
+    @BindViews({
+            R.id.mode_foot,
+            R.id.mode_bike,
+            R.id.mode_bus,
+            R.id.mode_car })
+    List<View> modeViews;
 
-    private ImageView recordButton;
-    private TextView simulateTV;
-    private TextView distTV;
-    private TextView timeTV;
-    private LinearLayout statsRow;
+    @BindView(R.id.record_button) ImageView recordButton;
+    @BindView(R.id.simulate_tv) TextView simulateTV;
+    @BindView(R.id.stats_dist) TextView distTV;
+    @BindView(R.id.stats_time) TextView timeTV;
+    @BindView(R.id.stats_row) LinearLayout statsRow;
 
     private boolean statsHidden = true;
 
@@ -53,23 +63,7 @@ public class RecordFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.fragment_record, container,false);
-
-        getModeViews().add(view.findViewById(R.id.mode_foot));
-        getModeViews().add(view.findViewById(R.id.mode_bike));
-        getModeViews().add(view.findViewById(R.id.mode_bus));
-        getModeViews().add(view.findViewById(R.id.mode_car));
-
-        for(View iv : modeViews){
-
-            iv.setOnClickListener(modeClickListener);
-        }
-        recordButton = view.findViewById(R.id.record_button);
-        recordButton.setOnClickListener(modeClickListener);
-
-        simulateTV = view.findViewById(R.id.simulate_tv);
-        distTV     = view.findViewById(R.id.stats_dist);
-        timeTV     = view.findViewById(R.id.stats_time);
-        statsRow   = view.findViewById(R.id.stats_row);
+        ButterKnife.bind(this, view);
 
         invalidateUI(((SaveMyBikeActivity)getActivity()).getCurrentVehicle());
 
@@ -121,26 +115,26 @@ public class RecordFragment extends Fragment {
      */
     public void selectVehicle(Vehicle vehicle){
 
-        for(int i = 0; i < getModeViews().size(); i++){
+        for(int i = 0; i < modeViews.size(); i++){
 
             if(vehicle.getType().ordinal() == i){
 
                 //select
-                Drawable mWrappedDrawable = DrawableCompat.wrap(((ImageView)getModeViews().get(i)).getDrawable().mutate());
+                Drawable mWrappedDrawable = DrawableCompat.wrap(((ImageView)modeViews.get(i)).getDrawable().mutate());
                 DrawableCompat.setTint(mWrappedDrawable, ContextCompat.getColor(getActivity(), android.R.color.white));
                 DrawableCompat.setTintMode(mWrappedDrawable, PorterDuff.Mode.SRC_IN);
-                ((ImageView)getModeViews().get(i)).setImageDrawable(mWrappedDrawable);
+                ((ImageView)modeViews.get(i)).setImageDrawable(mWrappedDrawable);
 
-                getModeViews().get(i).setBackground(ContextCompat.getDrawable(getActivity(), R.drawable.mode_selected));
+                modeViews.get(i).setBackground(ContextCompat.getDrawable(getActivity(), R.drawable.mode_selected));
             }else{
 
                 //unselect
-                Drawable mWrappedDrawable = DrawableCompat.wrap(((ImageView)getModeViews().get(i)).getDrawable().mutate());
+                Drawable mWrappedDrawable = DrawableCompat.wrap(((ImageView)modeViews.get(i)).getDrawable().mutate());
                 DrawableCompat.setTint(mWrappedDrawable, ContextCompat.getColor(getActivity(), android.R.color.black));
                 DrawableCompat.setTintMode(mWrappedDrawable, PorterDuff.Mode.SRC_IN);
-                ((ImageView)getModeViews().get(i)).setImageDrawable(mWrappedDrawable);
+                ((ImageView)modeViews.get(i)).setImageDrawable(mWrappedDrawable);
 
-                getModeViews().get(i).setBackground(ContextCompat.getDrawable(getActivity(), R.drawable.mode_bordered));
+                modeViews.get(i).setBackground(ContextCompat.getDrawable(getActivity(), R.drawable.mode_bordered));
             }
         }
     }
@@ -182,48 +176,51 @@ public class RecordFragment extends Fragment {
      * a click on a vehicle changes the vehicle
      * a click on the record button starts/stops a session
      */
-     private View.OnClickListener modeClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
+    @OnClick({
+            R.id.mode_foot,
+            R.id.mode_bike,
+            R.id.mode_bus,
+            R.id.mode_car,
+            R.id.record_button})
+    public void onClick(View view) {
 
-            switch (view.getId()){
-                case R.id.mode_foot:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.FOOT, true);
-                    break;
-                case R.id.mode_bike:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BIKE, true);
-                    break;
-                case R.id.mode_bus:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BUS, true);
-                    break;
-                case R.id.mode_car:
-                    ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.CAR, true);
-                    break;
-                case R.id.record_button:
+        switch (view.getId()){
+            case R.id.mode_foot:
+                ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.FOOT, true);
+                break;
+            case R.id.mode_bike:
+                ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BIKE, true);
+                break;
+            case R.id.mode_bus:
+                ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.BUS, true);
+                break;
+            case R.id.mode_car:
+                ((SaveMyBikeActivity)getActivity()).changeVehicle(Vehicle.VehicleType.CAR, true);
+                break;
+            case R.id.record_button:
 
-                    //detect if we are currently recording or not
-                    Session currentSession = null;
+                //detect if we are currently recording or not
+                Session currentSession = null;
 
-                    if(((SaveMyBikeActivity)getActivity()).getCurrentSession() != null){
-                        currentSession = ((SaveMyBikeActivity)getActivity()).getCurrentSession();
-                    }
+                if(((SaveMyBikeActivity)getActivity()).getCurrentSession() != null){
+                    currentSession = ((SaveMyBikeActivity)getActivity()).getCurrentSession();
+                }
 
-                    if(currentSession != null && currentSession.getState() == Session.SessionState.ACTIVE){
+                if(currentSession != null && currentSession.getState() == Session.SessionState.ACTIVE){
 
-                        //stop service
-                        ((SaveMyBikeActivity)getActivity()).stopRecording();
+                    //stop service
+                    ((SaveMyBikeActivity)getActivity()).stopRecording();
 
-                        applySessionState(Session.SessionState.STOPPED);
-                    } else {
+                    applySessionState(Session.SessionState.STOPPED);
+                } else {
 
-                        ((SaveMyBikeActivity)getActivity()).startRecording();
+                    ((SaveMyBikeActivity)getActivity()).startRecording();
 
-                        applySessionState(Session.SessionState.ACTIVE);
-                    }
-                    break;
-            }
+                    applySessionState(Session.SessionState.ACTIVE);
+                }
+            break;
         }
-    };
+    }
 
     /**
      * shows or hides the simulation view
@@ -234,13 +231,4 @@ public class RecordFragment extends Fragment {
         simulateTV.setVisibility(simulate ? View.VISIBLE : View.INVISIBLE);
     }
 
-
-    public ArrayList<View> getModeViews() {
-
-        if(modeViews == null){
-            modeViews = new ArrayList<>();
-        }
-
-        return modeViews;
-    }
 }

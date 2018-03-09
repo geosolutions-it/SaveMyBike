@@ -25,10 +25,13 @@ import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.Constants;
@@ -40,6 +43,7 @@ import it.geosolutions.savemybike.model.Configuration;
 import it.geosolutions.savemybike.model.Session;
 import it.geosolutions.savemybike.model.Vehicle;
 import it.geosolutions.savemybike.ui.fragment.BikeListFragment;
+import it.geosolutions.savemybike.ui.fragment.LoginFragment;
 import it.geosolutions.savemybike.ui.fragment.RecordFragment;
 import it.geosolutions.savemybike.ui.fragment.StatsFragment;
 
@@ -74,6 +78,8 @@ public class SaveMyBikeActivity extends AppCompatActivity {
     private boolean simulate = false;
     private boolean uploadWithWifiOnly = true;
 
+    @BindView(R.id.navigation) BottomNavigationView navigation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,11 +88,16 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         //inflate
         setContentView(R.layout.activity_main);
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+
+        ButterKnife.bind(this);
+
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         //select the "record" fragment
-        changeFragment(0);
+        changeFragment(3);
+
+        navigation.setVisibility(View.GONE);
+        getSupportActionBar().hide();
 
         //load the configuration and select the current vehicle
         this.currentVehicle = getCurrentVehicleFromConfig();
@@ -322,13 +333,15 @@ public class SaveMyBikeActivity extends AppCompatActivity {
      *
      * @param position menu index
      */
-    private void changeFragment(int position) {
+    public void changeFragment(int position) {
 
         Fragment currentFragment = getCurrentFragment();
 
         Fragment fragment = null;
         switch (position) {
             case 0:
+                navigation.setVisibility(View.VISIBLE);
+                getSupportActionBar().show();
                 if (currentFragment != null && currentFragment instanceof RecordFragment) {
                     return;
                 }
@@ -345,6 +358,12 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                     return;
                 }
                 fragment = new BikeListFragment();
+                break;
+            case 3:
+                if (currentFragment != null && currentFragment instanceof LoginFragment) {
+                    return;
+                }
+                fragment = new LoginFragment();
                 break;
         }
 

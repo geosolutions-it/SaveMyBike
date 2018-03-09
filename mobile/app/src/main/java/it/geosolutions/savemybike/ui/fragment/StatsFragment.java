@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
@@ -39,12 +41,14 @@ public class StatsFragment extends Fragment {
 
     private SessionAdapter adapter;
 
-    private TextView overallDistanceTV;
-    private TextView overallTimeTV;
-    private TextView overallElevTV;
+    @BindView(R.id.distance_overall) TextView overallDistanceTV;
+    @BindView(R.id.time_overall) TextView overallTimeTV;
+    @BindView(R.id.elev_overall) TextView overallElevTV;
 
-    private LinearLayout progress;
-    private LinearLayout content;
+    @BindView(R.id.progress_layout) LinearLayout progress;
+    @BindView(R.id.content_layout) LinearLayout content;
+
+    @BindView(R.id.sessions_list) ListView listView;
 
     /**
      * inflate and setup the view of this fragment
@@ -54,15 +58,8 @@ public class StatsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_stats, container,false);
+        ButterKnife.bind(this, view);
 
-        content  = view.findViewById(R.id.content_layout);
-        progress = view.findViewById(R.id.progress_layout);
-
-        overallDistanceTV = view.findViewById(R.id.distance_overall);
-        overallTimeTV     = view.findViewById(R.id.time_overall);
-        overallElevTV     = view.findViewById(R.id.elev_overall);
-
-        final ListView listView = view.findViewById(R.id.sessions_list);
         adapter = new SessionAdapter(getActivity(), R.layout.item_session, new ArrayList<Session>());
         listView.setAdapter(adapter);
 

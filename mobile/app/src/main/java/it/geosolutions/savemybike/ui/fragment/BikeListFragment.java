@@ -1,6 +1,5 @@
 package it.geosolutions.savemybike.ui.fragment;
 
-
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -21,6 +20,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import it.geosolutions.savemybike.R;
 import it.geosolutions.savemybike.model.Bike;
 import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
@@ -33,13 +35,14 @@ import it.geosolutions.savemybike.ui.activity.SaveMyBikeActivity;
 
 public class BikeListFragment extends Fragment {
 
+    @BindView(R.id.bikes_list) ListView listView;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.fragment_bikes, container, false);
-
-        final ListView listView = view.findViewById(R.id.bikes_list);
+        ButterKnife.bind(this, view);
 
         final ArrayList<Bike> bikes = ((SaveMyBikeActivity) getActivity()).getConfiguration().bikes;
 
@@ -47,15 +50,13 @@ public class BikeListFragment extends Fragment {
 
         listView.setAdapter(bikeAdapter);
 
-        view.findViewById(R.id.add_bike_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                Toast.makeText(getActivity(), "Todo : add another bike", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         return view;
+    }
+
+
+    @OnClick(R.id.add_bike_button)
+    public void onClick(View view) {
+        Toast.makeText(getActivity(), "Todo : add another bike", Toast.LENGTH_SHORT).show();
     }
 
     /**
