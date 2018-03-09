@@ -11,6 +11,8 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -32,6 +34,19 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
 		}
 	}
 	
+	public static String extractUsername(String s3_key) {
+		if(s3_key == null || s3_key.isEmpty()) {
+			return null;
+		}
+		Pattern pattern = Pattern.compile("cognito/smb/([\\w]+)/(.*)");
+		Matcher matcher = pattern.matcher(s3_key);
+		if (matcher.find())
+		{
+		    return matcher.group(1);
+		}
+		return null;
+	}
+	
     @Override
     public String handleRequest(SNSEvent event, Context context) {
         // context.getLogger().log("Received event: " + event);
@@ -43,7 +58,16 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
         
         context.getLogger().log(s3_bucket_name);
         context.getLogger().log(s3_object_key);
-
+        
+        String username = extractUsername(s3_object_key);
+        context.getLogger().log("Username: " + username);
+        
+        if (username == null || username.isEmpty()) {
+			// TODO: send notification to administrator with the object_key
+        	context.getLogger().log("FAILED TO GET USERNAME - ABORT");
+        	return s3_object_key;
+		}
+        
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(Regions.US_WEST_2)
                 .build();
@@ -59,10 +83,8 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
 	
 	        while(entry != null) {
 	        	
-	        	// TODO zip entry sanitizing checks
-	        	
-	            String fileName = entry.getName();
-	            System.out.println("Extracting " + fileName + ", compressed: " + entry.getCompressedSize() + " bytes, extracted: " + entry.getSize() + " bytes");
+	        	// String fileName = entry.getName();
+	            // System.out.println("Extracting " + fileName + ", compressed: " + entry.getCompressedSize() + " bytes, extracted: " + entry.getSize() + " bytes");
 	            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 	            int len;
 	            while ((len = zis.read(buffer)) > 0) {
@@ -74,8 +96,10 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
 	            String line;
 	
 	            QueryBuilder queries = new QueryBuilder(context);
+	            queries.setUsername(username);
+	            
 	            while ((line = in.readLine()) != null) {
-	            	context.getLogger().log(line);
+	            	// context.getLogger().log(line);
 	            	
 	            	queries.parseLine(line);
 	            }
@@ -94,7 +118,7 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
 	                
 	                while( qI.hasNext()) {
 	                	stmt.executeUpdate(qI.next());
-		                context.getLogger().log("Successfully executed query.\n");
+		                // context.getLogger().log("Successfully executed query.\n");
 	                }
 
 	    		} catch (Exception e) {
@@ -102,7 +126,6 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
 	    			context.getLogger().log("Caught exception: " + e.getMessage());
 	    		}
 
-	            
 	            is.close();
 	            outputStream.close();
 	            entry = zis.getNextEntry();
@@ -119,10 +142,7 @@ public class LambdaFunctionHandler implements RequestHandler<SNSEvent, String> {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        
-        
-        
-        
+
         return s3_object_key;
     }
 }

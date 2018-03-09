@@ -11,10 +11,19 @@ public class QueryBuilder {
 	public Set<String> queries;
 
 	public Map<String, String> currentQuery;
-	protected Context context;
-
 	public String[] headers;
 
+	protected Context context;
+	protected String username;
+	
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	
 	public QueryBuilder(Context context) {
 		super();
 		this.context = context;
@@ -42,7 +51,7 @@ public class QueryBuilder {
 
 		if (line.contains("sessionId")) {
 			headers = cropLine(line).split(",");
-			context.getLogger().log("Header: " + headers);
+			// context.getLogger().log("Header: " + headers);
 		} else {
 
 			String[] values = cropLine(line).split(",");
@@ -56,16 +65,20 @@ public class QueryBuilder {
 			//Clear the buffer
 			sb.setLength(0);
 			
-			sb.append("INSERT INTO testing (");
+			sb.append("INSERT INTO datapoints (");
 			for (int i = 0; i < headers.length; i++) {
 				
-				context.getLogger().log(headers[i] + " : "+ values[i]);
+				// context.getLogger().log(headers[i] + " : "+ values[i]);
 				currentQuery.put(headers[i], values[i]);
 				if(!headers[i].equalsIgnoreCase("latitude") && !headers[i].equalsIgnoreCase("longitude")) {
 					sb.append(headers[i]).append(",");
 				}
-				
 			}
+			
+			if(username != null && !username.isEmpty()) {
+				sb.append("username,");
+			}
+			
 			sb.append("color,the_geom) VALUES (");
 			
 			for (int i = 0; i < headers.length; i++) {
@@ -75,13 +88,23 @@ public class QueryBuilder {
 				}
 			}
 			
-			// TODO compute the color
-			sb.append("128,st_setsrid(st_point(").append(currentQuery.get("longitude")).append(",").append(currentQuery.get("latitude")).append("), 4326));");
+			if(username != null && !username.isEmpty()) {
+				sb.append("'").append(username).append("',");
+			}
+			
+			long color = 128;
+			try {
+				long sessionId = Long.parseLong(currentQuery.get("sessionId"));
+				color = sessionId % 255;
+			}catch (NumberFormatException nfe) {
+				color = 128;
+			}
+			
+			sb.append(color).append(",st_setsrid(st_point(").append(currentQuery.get("longitude")).append(",").append(currentQuery.get("latitude")).append("), 4326));");
 			
 			queries.add(sb.toString());
 			context.getLogger().log(sb.toString());
 		}
 		return this;
 	}
-
 }
