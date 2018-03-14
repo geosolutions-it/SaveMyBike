@@ -198,8 +198,8 @@ public class LoginFragment extends Fragment {
 
 
             if (newDevice != null) {
-                Log.d(TAG, newDevice.getDeviceName());
-                Log.d(TAG, newDevice.getDeviceKey());
+                if(newDevice.getDeviceName() != null) Log.d(TAG, newDevice.getDeviceName());
+                if(newDevice.getDeviceKey() != null) Log.d(TAG, newDevice.getDeviceKey());
             }
 
             onLoginSuccess();

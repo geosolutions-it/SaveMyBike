@@ -121,31 +121,30 @@ public class SaveMyBikeActivity extends AppCompatActivity {
                 @Override
                 public void gotConfig(final Configuration configuration) {
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
+                    if (configuration != null) {
 
-                            if (configuration != null) {
+                        if (BuildConfig.DEBUG) {
+                            Log.i(TAG, "config downloaded : " + configuration.id);
+                        }
 
-                                if (BuildConfig.DEBUG) {
-                                    Log.i(TAG, "config downloaded : " + configuration.id);
-                                }
+                        //save the config
+                        Configuration.saveConfiguration(getBaseContext(), configuration);
 
-                                //save the config
-                                Configuration.saveConfiguration(getBaseContext(), configuration);
+                        //update model
+                        SaveMyBikeActivity.this.configuration = configuration;
+                        SaveMyBikeActivity.this.currentVehicle = getCurrentVehicleFromConfig();
 
-                                //update model
-                                SaveMyBikeActivity.this.configuration = configuration;
-                                SaveMyBikeActivity.this.currentVehicle = getCurrentVehicleFromConfig();
-
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
                                 //invalidate UI
                                 invalidateRecordingUI();
-
-                            } else {
-                                Log.e(TAG, "error downloading config ");
                             }
-                        }
-                    });
+                        });
+
+                    } else {
+                        Log.e(TAG, "error downloading config ");
+                    }
                 }
 
                 @Override
