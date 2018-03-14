@@ -8,7 +8,7 @@ package it.geosolutions.savemybike.data;
 public class Constants {
 
     public final static int DEFAULT_DATA_READ_INTERVAL = 1000;
-    public final static int DEFAULT_PERSISTANCE_INTERVAL = 15000;
+    public final static int DEFAULT_PERSISTENCE_INTERVAL = 15000;
     public final static boolean DEFAULT_WIFI_ONLY = true;
 
     public final static String AWS_BUCKET_NAME = "smb-test-lamb";
@@ -16,11 +16,6 @@ public class Constants {
     public final static String AWS_POOL      = "us-west-2_glXagvW4j";
     public final static String AWS_CLIENT_ID_WO_SECRET = "5rgu4dnktbi8i9k56biff7t3jf";
 
-    public final static String AWS_CLIENT_ID_W_SECRET = "1he4dlrhs9aenll11gmfllhvgd";
-    public final static String AWS_CLIENT_SECRET = "131mec34kbuk262oag23q9g85oe3sqjdecg0l2lo5k5gp92po0lu";
-
-    public final static String AWS_USER = "robert";
-    public final static String AWS_PASS = "P@ssw0rd";
     public final static String AWS_ACCESS_KEY    = "AKIAIW4KJ45YKAZ63OTQ";
     public final static String AWS_ACCESS_SECRET = "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";
 
@@ -51,8 +46,10 @@ public class Constants {
 
     public static final String PREF_WIFI_ONLY_UPLOAD         = "it.geosolutions.savemybike.pref.wifi_only";
     public static final String PREF_CURRENT_CONFIG           = "it.geosolutions.savemybike.pref.config";
-    public static final String PREF_CONFIG_TOKEN_EXPIRE_DATE = "it.geosolutions.savemybike.pref.config.expires";
-    public static final String PREF_CONFIG_TOKEN             = "it.geosolutions.savemybike.pref.config.token";
+    public static final String PREF_USERID = "it.geosolutions.savemybike.pref.username";
+    public static final String PREF_CONFIG_ACCESSTOKEN       = "it.geosolutions.savemybike.pref.config.accessToken";
+    public static final String PREF_CONFIG_IDTOKEN           = "it.geosolutions.savemybike.pref.config.idToken";
+    public static final String PREF_CONFIG_REFRESHTOKEN      = "it.geosolutions.savemybike.pref.config.refreshToken";
 
     public final static String UNIT_KMH = "km/h";
     public final static String UNIT_MPH = "mph";

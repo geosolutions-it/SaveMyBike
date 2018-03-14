@@ -1,9 +1,11 @@
 package it.geosolutions.savemybike.data.server;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -127,8 +129,12 @@ public class S3Manager implements TransferListener{
             }
 
             // TODO: Build the key in a separate utility, using the Cognito Identity ID instead of the Username
+
+            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            final String userId = preferences.getString(Constants.PREF_USERID, "BAD_USER_PREFERENCE" );
+
             //upload zip
-            TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, "cognito/smb/"+Constants.AWS_USER+"/"+zipFile.getName(), zipFile);
+            TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, "cognito/smb/"+userId+"/"+zipFile.getName(), zipFile);
             observer.setTransferListener(this);
             getObserverMap().put(observer.getId(), session.getId());
         }

@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -27,6 +28,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.tokens.CognitoIdToken;
 
 import java.lang.ref.WeakReference;
 
@@ -93,11 +96,20 @@ public class SaveMyBikeActivity extends AppCompatActivity {
 
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        //select the "record" fragment
-        changeFragment(3);
-
-        navigation.setVisibility(View.GONE);
-        getSupportActionBar().hide();
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        final String idTokenString = preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null);
+        if(idTokenString == null){
+            // login
+            showLoginFragment();
+        }else {
+            CognitoIdToken cidt = new CognitoIdToken(idTokenString);
+            if(System.currentTimeMillis() > cidt.getExpiration().getTime()){
+                showLoginFragment();
+            }else {
+                //select the "record" fragment
+                changeFragment(0);
+            }
+        }
 
         //load the configuration and select the current vehicle
         this.currentVehicle = getCurrentVehicleFromConfig();
@@ -152,13 +164,19 @@ public class SaveMyBikeActivity extends AppCompatActivity {
          *  TODO we may give an explanation for what the SD card access is necessary
          *  TODO we may ask the user for upload permission and only then check this sd-permission
          */
-        this.uploadWithWifiOnly = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
+        this.uploadWithWifiOnly = preferences.getBoolean(Constants.PREF_WIFI_ONLY_UPLOAD, Constants.DEFAULT_WIFI_ONLY);
 
         if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && permissionNecessary(Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionIntent.SD_CARD))) {
 
             final S3Manager s3Manager = new S3Manager(getBaseContext(), uploadWithWifiOnly);
             s3Manager.checkUpload();
         }
+    }
+
+    void showLoginFragment(){
+        changeFragment(3);
+        navigation.setVisibility(View.GONE);
+        getSupportActionBar().hide();
     }
 
     @Override

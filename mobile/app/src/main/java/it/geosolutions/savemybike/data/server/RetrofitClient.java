@@ -6,7 +6,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.amazonaws.ClientConfiguration;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoDevice;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUser;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool;
@@ -15,7 +14,9 @@ import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.Auth
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.AuthenticationDetails;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.ChallengeContinuation;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.MultiFactorAuthenticationContinuation;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.exceptions.CognitoParameterInvalidException;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.AuthenticationHandler;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.tokens.CognitoIdToken;
 import com.amazonaws.regions.Regions;
 
 import java.io.IOException;
@@ -67,17 +68,37 @@ public class RetrofitClient {
 
         //do we have a valid token ?
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        final String oldToken = preferences.getString(Constants.PREF_CONFIG_TOKEN, null);
-        long expires = preferences.getLong(Constants.PREF_CONFIG_TOKEN_EXPIRE_DATE, 0);
+        // Requests will fail if we use the AccessToken
+        if(!preferences.contains(Constants.PREF_CONFIG_IDTOKEN)){
+            Log.d(TAG, "Token not available, need to login first");
+            return;
+        }
+        final String idTokenString = preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null);
+        CognitoIdToken accessToken = new CognitoIdToken(idTokenString);
+        try {
+            if (System.currentTimeMillis() < accessToken.getExpiration().getTime()) {
 
+                fetchConfig(idTokenString, callback);
 
-        if(oldToken != null && System.currentTimeMillis() + Constants.ONE_MINUTE < expires){
+            } else {
 
-            fetchConfig(oldToken, callback);
+                Log.d(TAG, "Token Expired");
+            /*
+            acquireToken(new Authenticate() {
+                @Override
+                public void success() {
+                    fetchConfig(preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null), callback);
+                }
 
-        }else{
-
-            acquireToken(callback);
+                @Override
+                public void error(String message) {
+                    Log.e(TAG, message);
+                }
+            });
+            */
+            }
+        }catch (CognitoParameterInvalidException cpie){
+            Log.e(TAG, "Invalid Token found in preferences");
         }
     }
 
@@ -102,7 +123,7 @@ public class RetrofitClient {
         }
     }
 
-    /**
+    /*
      * acquires a token by accessing the AWS user pool and logging in
      *
      * the token is then saved to local prefs for future user
@@ -112,12 +133,11 @@ public class RetrofitClient {
      *
      * @param callback for the result of the operation
      */
-    private void acquireToken(@NonNull final GetConfigCallback callback){
-
-        final ClientConfiguration clientConfiguration = new ClientConfiguration();
+    /*
+    private void acquireToken(@NonNull final Authenticate callback){
 
         // Create a CognitoUserPool object to refer to your user pool
-        final CognitoUserPool userPool = new CognitoUserPool(context, Constants.AWS_POOL, Constants.AWS_CLIENT_ID_W_SECRET, Constants.AWS_CLIENT_SECRET, clientConfiguration, Regions.US_WEST_2);
+        final CognitoUserPool userPool = new CognitoUserPool(context, Constants.AWS_POOL, Constants.AWS_CLIENT_ID_WO_SECRET,null, Regions.US_WEST_2);
 
         final CognitoUser currentUser = userPool.getCurrentUser();
 
@@ -128,15 +148,21 @@ public class RetrofitClient {
             public void onSuccess(CognitoUserSession userSession, CognitoDevice newDevice) {
 
                 // Get id token from CognitoUserSession.
-                final String idToken = userSession.getIdToken().getJWTToken();
+                String accessToken = userSession.getAccessToken().getJWTToken();
+                String idToken = userSession.getIdToken().getJWTToken();
+                String refreshToken = userSession.getRefreshToken().getToken();
 
-                long expires = userSession.getIdToken().getExpiration().getTime();
+                Log.d(TAG, accessToken);
+                Log.d(TAG, idToken);
+                Log.d(TAG, refreshToken);
+
                 SharedPreferences.Editor ed = PreferenceManager.getDefaultSharedPreferences(context).edit();
-                ed.putLong(Constants.PREF_CONFIG_TOKEN_EXPIRE_DATE, expires).apply();
-                ed.putString(Constants.PREF_CONFIG_TOKEN, idToken);
+                ed.putString(Constants.PREF_CONFIG_ACCESSTOKEN, accessToken);
+                ed.putString(Constants.PREF_CONFIG_IDTOKEN, idToken);
+                ed.putString(Constants.PREF_CONFIG_REFRESHTOKEN, refreshToken);
                 ed.apply();
 
-                fetchConfig(idToken, callback);
+                callback.success();
             }
 
             @Override
@@ -177,6 +203,7 @@ public class RetrofitClient {
             callback.error("No current user available");
         }
     }
+    */
 
 
     private Retrofit getRetrofit(final String token){
@@ -283,4 +310,11 @@ public class RetrofitClient {
         void gotConfig(Configuration configuration);
         void error(String message);
     }
+/*
+    public interface Authenticate
+    {
+        void success();
+        void error(String message);
+    }
+*/
 }

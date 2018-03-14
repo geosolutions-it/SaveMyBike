@@ -26,7 +26,7 @@ import it.geosolutions.savemybike.model.Vehicle;
  * periodically {@link Constants#DEFAULT_DATA_READ_INTERVAL} adds
  * dataPoints of the current data situation to a list
  *
- * This list is periodically {@link Constants#DEFAULT_PERSISTANCE_INTERVAL}
+ * This list is periodically {@link Constants#DEFAULT_PERSISTENCE_INTERVAL}
  * persisted to the database
  */
 
@@ -61,7 +61,7 @@ public class SessionLogic implements IDataProvider {
             this.persistanceInterval = configuration.persistanceInterval;
         }else{
             this.dataReadInterval = Constants.DEFAULT_DATA_READ_INTERVAL;
-            this.persistanceInterval = Constants.DEFAULT_PERSISTANCE_INTERVAL;
+            this.persistanceInterval = Constants.DEFAULT_PERSISTENCE_INTERVAL;
         }
     }
 
