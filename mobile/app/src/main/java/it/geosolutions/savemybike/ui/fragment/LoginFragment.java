@@ -50,7 +50,7 @@ public class LoginFragment extends Fragment {
 
     // private static final int REQUEST_SIGNUP = 0;
 
-    @BindView(R.id.input_email)     EditText _emailText;
+    @BindView(R.id.input_username)     EditText _usernameText;
     @BindView(R.id.input_password)  EditText _passwordText;
     @BindView(R.id.btn_login)       Button _loginButton;
     @BindView(R.id.btn_test)        Button _testButton;
@@ -109,14 +109,14 @@ public class LoginFragment extends Fragment {
     public boolean validate() {
         boolean valid = true;
 
-        String email = _emailText.getText().toString();
+        String email = _usernameText.getText().toString();
         String password = _passwordText.getText().toString();
 
         if (email.isEmpty() /*|| !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()*/) {
-            _emailText.setError("enter a valid email address");
+            _usernameText.setError("enter a valid email address");
             valid = false;
         } else {
-            _emailText.setError(null);
+            _usernameText.setError(null);
         }
 
         if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
@@ -141,7 +141,7 @@ public class LoginFragment extends Fragment {
         CognitoUserPool userPool = new CognitoUserPool((getActivity()), Constants.AWS_POOL, Constants.AWS_CLIENT_ID_WO_SECRET, null, Regions.US_WEST_2);
 
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        final String userId = preferences.getString(Constants.PREF_USERID, _emailText.getText().toString() );
+        final String userId = preferences.getString(Constants.PREF_USERID, _usernameText.getText().toString() );
         final String accessTokenString = preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null);
         final String idTokenString = preferences.getString(Constants.PREF_CONFIG_ACCESSTOKEN, null);
         final String refreshTokenString = preferences.getString(Constants.PREF_CONFIG_REFRESHTOKEN, null);
@@ -195,7 +195,6 @@ public class LoginFragment extends Fragment {
             ed.putString(Constants.PREF_CONFIG_IDTOKEN, idToken);
             ed.putString(Constants.PREF_CONFIG_REFRESHTOKEN, refreshToken);
             ed.apply();
-
 
             if (newDevice != null) {
                 if(newDevice.getDeviceName() != null) Log.d(TAG, newDevice.getDeviceName());
