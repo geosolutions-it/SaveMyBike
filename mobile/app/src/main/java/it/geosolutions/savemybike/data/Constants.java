@@ -12,12 +12,8 @@ public class Constants {
     public final static boolean DEFAULT_WIFI_ONLY = true;
 
     public final static String AWS_BUCKET_NAME = "smb-test-lamb";
-    public final static String AWS_REGION    = "us-west-2";
-    public final static String AWS_POOL      = "us-west-2_glXagvW4j";
-    public final static String AWS_CLIENT_ID_WO_SECRET = "5rgu4dnktbi8i9k56biff7t3jf";
-
-    public final static String AWS_ACCESS_KEY    = "AKIAIW4KJ45YKAZ63OTQ";
-    public final static String AWS_ACCESS_SECRET = "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";
+    public final static String AWS_POOL      = "us-west-2_E1i57PuDf";
+    public final static String AWS_CLIENT_ID_WO_SECRET = "69pkdd67bnvko38n9fgftrdt15";
 
     public final static String APP_DIR = "SaveMyBike/";
 

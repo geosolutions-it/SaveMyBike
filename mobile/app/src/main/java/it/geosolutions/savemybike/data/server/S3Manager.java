@@ -6,16 +6,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
-import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3Client;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -25,6 +21,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -33,6 +30,9 @@ import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.data.Util;
 import it.geosolutions.savemybike.data.db.SMBDatabase;
 import it.geosolutions.savemybike.model.Session;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
 
 /**
  * Created by Robert Oehler on 27.11.17.
@@ -48,7 +48,7 @@ public class S3Manager implements TransferListener{
     private boolean wifiOnly;
 
     // The TransferUtility is the primary class for managing transfer to S3
-    private TransferUtility transferUtility;
+//    private TransferUtility transferUtility;
 
     // A List of all transfers
     private HashMap<Integer, Long> observerMap;
@@ -112,8 +112,12 @@ public class S3Manager implements TransferListener{
             return;
         }
 
+        // create random object
+        Random random = new Random();
+
         //create CSV
         CSVCreator csvCreator = new CSVCreator();
+        RetrofitClient retrofitClient = new RetrofitClient(context);
 
         for(Session session : sessionsToUpload){
 
@@ -128,16 +132,49 @@ public class S3Manager implements TransferListener{
                 continue;
             }
 
-            // TODO: Build the key in a separate utility, using the Cognito Identity ID instead of the Username
+            final String s3ObjectKey = getS3ObjectKey(context, zipFile);
 
-            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            final String userId = preferences.getString(Constants.PREF_USERID, "BAD_USER_PREFERENCE" );
+            //upload zip using S3 transfer utility
+            //final TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, s3ObjectKey, zipFile);
+            // observer.setTransferListener(this);
+            //getObserverMap().put(observer.getId(), session.getId());
 
-            //upload zip
-            TransferObserver observer = getTransferUtility().upload(Constants.AWS_BUCKET_NAME, "cognito/smb/"+userId+"/"+zipFile.getName(), zipFile);
-            observer.setTransferListener(this);
-            getObserverMap().put(observer.getId(), session.getId());
+            //upload zip using Retrofit Client through API Gateway
+            // get next next pseudorandom value
+            int randomValue = random.nextInt();
+            while(getObserverMap().containsKey(randomValue)){
+                // TODO: remove this when this class will not implement TransferListener
+                randomValue = random.nextInt();
+            }
+
+            final int dirtyHackWaitingForARefactor = randomValue;
+            getObserverMap().put(dirtyHackWaitingForARefactor, session.getId());
+
+            retrofitClient.uploadFile(s3ObjectKey, zipFile,
+                new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call,
+                                           retrofit2.Response<ResponseBody> response) {
+                        Log.v("Upload", "success");
+                        S3Manager.this.onStateChanged(dirtyHackWaitingForARefactor, TransferState.COMPLETED);
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        Log.e("Upload error:", t.getMessage());
+                        S3Manager.this.onError(dirtyHackWaitingForARefactor, new Exception(t));
+                    }
+                });
         }
+    }
+
+    @NonNull
+    private static String getS3ObjectKey(@NonNull Context context, @NonNull File zipFile) {
+
+        // TODO: Build the key using the Cognito Identity ID instead of the Username
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+        return  "cognito/smb/"+ preferences.getString(Constants.PREF_USERID, "BAD_USER_PREFERENCE" ) + "/" + zipFile.getName();
     }
 
     @Override
@@ -274,7 +311,7 @@ public class S3Manager implements TransferListener{
     /**
      * returns the transfer utility- creates it if necessary
      * @return a TransferUtility instance
-     */
+
     private TransferUtility getTransferUtility() {
 
         if(transferUtility == null){
@@ -283,13 +320,13 @@ public class S3Manager implements TransferListener{
 
         return transferUtility;
     }
-
+     */
     /**
      * Gets an instance of a S3 client which is constructed using the given
      * Context.
      *
      * @return A default S3 client.
-     */
+
     private AmazonS3Client getS3Client() {
 
         AmazonS3Client sS3Client = new AmazonS3Client(getBasicCredentialsProvider());
@@ -297,17 +334,17 @@ public class S3Manager implements TransferListener{
 
         return sS3Client;
     }
-
+     */
     /**
      * Gets an instance of BasicAWSCredentials which uses the credentials inside this app
      * This may not be very secure
      * @return the BasicAWSCredentials
-     */
+
     private BasicAWSCredentials getBasicCredentialsProvider(){
 
         return new BasicAWSCredentials(Constants.AWS_ACCESS_KEY, Constants.AWS_ACCESS_SECRET);
     }
-
+     */
     /**
      * a map to map upload ids to session ids
      * @return the map

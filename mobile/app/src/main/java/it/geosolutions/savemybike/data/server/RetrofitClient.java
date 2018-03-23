@@ -6,19 +6,10 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoDevice;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUser;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserSession;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.AuthenticationContinuation;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.AuthenticationDetails;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.ChallengeContinuation;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.continuations.MultiFactorAuthenticationContinuation;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.exceptions.CognitoParameterInvalidException;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.AuthenticationHandler;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.tokens.CognitoIdToken;
-import com.amazonaws.regions.Regions;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -26,15 +17,18 @@ import it.geosolutions.savemybike.BuildConfig;
 import it.geosolutions.savemybike.data.Constants;
 import it.geosolutions.savemybike.model.Configuration;
 import okhttp3.Interceptor;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.GET;
 
 /**
  * Created by Robert Oehler on 07.12.17.
@@ -46,7 +40,7 @@ public class RetrofitClient {
 
     private static final String TAG = "RetrofitClient";
 
-    private final static String ENDPOINT = "https://nlzuoba0r2.execute-api.us-west-2.amazonaws.com/demo/";
+    private final static String ENDPOINT = "https://ex2rxvvhpc.execute-api.us-west-2.amazonaws.com/prod/";
 
     private Retrofit retrofit;
     private OkHttpClient client;
@@ -66,19 +60,19 @@ public class RetrofitClient {
      */
     public void getRemoteConfig(@NonNull final GetConfigCallback callback) {
 
-        //do we have a valid token ?
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String idTokenString = getSavedTokenString(context);
+
         // Requests will fail if we use the AccessToken
-        if(!preferences.contains(Constants.PREF_CONFIG_IDTOKEN)){
+        if(idTokenString == null){
             Log.d(TAG, "Token not available, need to login first");
             return;
         }
-        final String idTokenString = preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null);
+
         CognitoIdToken accessToken = new CognitoIdToken(idTokenString);
         try {
             if (System.currentTimeMillis() < accessToken.getExpiration().getTime()) {
 
-                fetchConfig(idTokenString, callback);
+                fetchConfig(callback);
 
             } else {
 
@@ -102,15 +96,22 @@ public class RetrofitClient {
         }
     }
 
+
+    public static String getSavedTokenString(Context context){
+        //do we have a valid token ?
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null);
+    }
+
+
     /**
      * fetches the current configuration from the AWS server using @param token for authentication
-     * @param token token to authenticate
      * @param callback call for the result
      */
-    private void fetchConfig(@NonNull final String token, @NonNull final GetConfigCallback callback){
+    private void fetchConfig(@NonNull final GetConfigCallback callback){
 
         //do the (retrofit) get call
-        final Call<Configuration> call = getServices(token).getConfig();
+        final Call<Configuration> call = getServices().getConfig();
 
         try {
             final Configuration configuration = call.execute().body();
@@ -206,10 +207,10 @@ public class RetrofitClient {
     */
 
 
-    private Retrofit getRetrofit(final String token){
+    private Retrofit getRetrofit(){
         if(retrofit == null){
             retrofit = new Retrofit.Builder()
-                    .client(getClient(token))
+                    .client(getClient())
                     .baseUrl(ENDPOINT)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
@@ -218,11 +219,11 @@ public class RetrofitClient {
         return retrofit;
     }
 
-    private OkHttpClient getClient(final String token){
+    private OkHttpClient getClient(){
 
         if(client == null) {
             client  = new OkHttpClient.Builder()
-                    .addInterceptor(new TokenInterceptor(token))
+                    .addInterceptor(new TokenInterceptor(context))
                     .addInterceptor(new LoggingInterceptor())
                     .build();
         }
@@ -240,8 +241,17 @@ public class RetrofitClient {
             this.token = token;
         }
 
+        TokenInterceptor(Context context){
+
+            this.token = getSavedTokenString(context);
+
+        }
+
         @Override
         public Response intercept(Chain chain) throws IOException {
+
+            // TODO: inject authentication token
+
             Request request = chain.request();
             Request authenticatedRequest = request.newBuilder().header("Authorization", token).build();
             return chain.proceed(authenticatedRequest);
@@ -292,18 +302,11 @@ public class RetrofitClient {
         }
     }
 
-    private SMBRemoteServices getServices(final String token){
+    private SMBRemoteServices getServices(){
 
-        return getRetrofit(token).create(SMBRemoteServices.class);
+        return getRetrofit().create(SMBRemoteServices.class);
 
     }
-
-    interface SMBRemoteServices {
-
-        @GET("config")
-        Call<Configuration> getConfig();
-    }
-
 
     public interface GetConfigCallback
     {
@@ -317,4 +320,23 @@ public class RetrofitClient {
         void error(String message);
     }
 */
+
+    public void uploadFile(String s3ObjectKey, File file, Callback callback) {
+
+        // TODO make a singleton for the services
+        // create upload service client
+        SMBRemoteServices service = getServices();
+
+        // create RequestBody instance from file
+        RequestBody requestFile =
+                RequestBody.create(
+                        MediaType.parse("application/zip"),
+                        file
+                );
+
+        // finally, execute the request
+        Call<ResponseBody> call = service.upload(s3ObjectKey, requestFile);
+        call.enqueue(callback);
+    }
+
 }

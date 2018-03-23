@@ -102,7 +102,7 @@ public class LoginFragment extends Fragment {
 
     public void onLoginFailed() {
         Toast.makeText(getActivity(), "Login failed", Toast.LENGTH_LONG).show();
-
+        progressDialog.dismiss();
         _loginButton.setEnabled(true);
     }
 
@@ -141,7 +141,7 @@ public class LoginFragment extends Fragment {
         CognitoUserPool userPool = new CognitoUserPool((getActivity()), Constants.AWS_POOL, Constants.AWS_CLIENT_ID_WO_SECRET, null, Regions.US_WEST_2);
 
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        final String userId = preferences.getString(Constants.PREF_USERID, _usernameText.getText().toString() );
+        final String userId = _usernameText.getText().toString();
         final String accessTokenString = preferences.getString(Constants.PREF_CONFIG_IDTOKEN, null);
         final String idTokenString = preferences.getString(Constants.PREF_CONFIG_ACCESSTOKEN, null);
         final String refreshTokenString = preferences.getString(Constants.PREF_CONFIG_REFRESHTOKEN, null);
@@ -242,7 +242,7 @@ public class LoginFragment extends Fragment {
         public void onFailure(Exception exception) {
             // Sign-in failed, check exception for the cause
             Log.e(TAG, "onFailure", exception);
-
+            onLoginFailed();
         }
     };
 
