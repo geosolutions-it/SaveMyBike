@@ -1,0 +1,1 @@
+curl -v -d "{\"name\": \"bikename\",\"status\":1}" -H "Content-Type:application/json" http://localhost:5000/vehicles
