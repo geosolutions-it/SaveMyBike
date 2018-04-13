@@ -6,7 +6,7 @@ Created on 13 apr 2018
 from flask import Flask, g
 from flask_restful import  Api
 from flask.json import JSONEncoder
-from Vehicles import Vehicle, VehiclesList
+from Vehicles import Vehicle, VehiclesList, TagsList
 from Users import User, UsersList
 from datetime import date
 
@@ -40,6 +40,8 @@ api = Api(app)
 
 api.add_resource(VehiclesList, '/vehicles')
 api.add_resource(Vehicle, '/vehicles/<vehicle_id>')
+api.add_resource(TagsList, '/vehicles/<vehicle_id>/tags')
+
 
 api.add_resource(UsersList, '/users')
 api.add_resource(User, '/users/<user_id>')

@@ -8,7 +8,10 @@ from flask import jsonify, request
 from flask_restful import reqparse, Resource
 
 from Database import get_db
+from Utility import limit_int
 
+# https://developer.github.com/v3/guides/traversing-with-pagination/
+# https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/
 searchParser= reqparse.RequestParser()
 searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page').add_argument('tagId')
 
@@ -17,11 +20,28 @@ searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page
 class VehiclesList(Resource):
     def get(self):
         args = searchParser.parse_args()
-        print(args)
-        print(request.args)
+
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM vehicles order by id limit 50;")
+        per_page = 50;
+        offset = 0;
+        
+        if args['per_page'] is not None:
+            try:
+                per_page=limit_int(int(args['per_page']), 0, 50)
+            except ValueError: 
+                pass
+        
+        if args['page'] is not None:
+            try:
+                offset=limit_int(int(args['page']) * per_page, 0)
+            except ValueError: 
+                pass
+            
+        
+        SQL="SELECT * FROM vehicles order by id limit %s offset %s;"
+        data = (per_page, offset)
+        cur.execute(SQL, data)
         # row = cur.fetchone()
         rows = cur.fetchall()
         if rows == None:
@@ -147,6 +167,64 @@ class Vehicle(Resource):
         inputslist.append(vehicle_id)
         
         data = tuple(inputslist)
+        cur.execute(SQL, data) 
+        id_of_new_row = cur.fetchone()[0]        
+        
+        conn.commit()
+        cur.close()
+        
+        return id_of_new_row, 201
+
+
+# TagsList
+# shows a list of all the tags associated with a specific Vehicle, and lets you POST to add new vehicles
+class TagsList(Resource):
+    def get(self, vehicle_id):
+        
+        try:
+            int(vehicle_id)
+        except ValueError: 
+            return None # the input is not an integer
+        
+        args = searchParser.parse_args()
+
+        conn = get_db()
+        cur = conn.cursor()
+        SQL = "SELECT id FROM tags where vehicle_id = %s order by id limit 50;" 
+        data = (vehicle_id,) # keep the comma to make it a tuple
+        cur.execute(SQL, data) 
+        # row = cur.fetchone()
+        rows = cur.fetchall()
+        if rows == None:
+            print("There are no results for this query")
+            rows = []
+        
+        columns = [desc[0] for desc in cur.description]
+        result = []
+        for row in rows:
+            row = dict(zip(columns, row))
+            result.append(row)
+
+        conn.commit()
+        cur.close()
+        return jsonify(result)
+
+    def post(self, vehicle_id):
+        content = request.json
+        print(content)
+        
+        _type = content.get('type', 1)
+        name = content.get('name', None)
+        status = content.get('status', 0)
+        lastposition  = content.get('lastposition', None)
+        image  = content.get('image', None)
+        owner  = content.get('owner', None)
+        
+        conn = get_db()
+        cur = conn.cursor()
+        
+        SQL = "INSERT INTO vehicles (type, name, status, lastposition, image, owner) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;" 
+        data = (_type, name, status, lastposition, image, owner )
         cur.execute(SQL, data) 
         id_of_new_row = cur.fetchone()[0]        
         
