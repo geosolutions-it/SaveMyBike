@@ -10,6 +10,8 @@ from flask_restful import reqparse, Resource
 from Database import get_db
 from Utility import limit_int
 
+from geojson import Point
+
 # https://developer.github.com/v3/guides/traversing-with-pagination/
 # https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/
 searchParser= reqparse.RequestParser()
@@ -19,16 +21,16 @@ searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page
 # shows a list of all vehicles, and lets you POST to add new vehicles
 class VehiclesList(Resource):
     def get(self):
+        
         args = searchParser.parse_args()
 
-        conn = get_db()
-        cur = conn.cursor()
         per_page = 50;
         offset = 0;
+        tagId = None
         
         if args['per_page'] is not None:
             try:
-                per_page=limit_int(int(args['per_page']), 0, 50)
+                per_page=limit_int(int(args['per_page']), 0, 100)
             except ValueError: 
                 pass
         
@@ -38,9 +40,22 @@ class VehiclesList(Resource):
             except ValueError: 
                 pass
             
+        if args['tagId'] is not None:
+            try:
+                tagId=limit_int(int(args['tagId']), 0)
+            except ValueError: 
+                pass
+            
         
-        SQL="SELECT * FROM vehicles order by id limit %s offset %s;"
-        data = (per_page, offset)
+        if tagId is not None:
+            SQL="SELECT v.* FROM vehicles as v JOIN tags as t ON v.id = t.vehicle_id where t.id = %s;"
+            data = (tagId,)
+        else :            
+            SQL="SELECT * FROM vehicles order by id limit %s offset %s;"
+            data = (per_page, offset)
+            
+        conn = get_db()
+        cur = conn.cursor()
         cur.execute(SQL, data)
         # row = cur.fetchone()
         rows = cur.fetchall()
@@ -213,22 +228,32 @@ class TagsList(Resource):
         content = request.json
         print(content)
         
-        _type = content.get('type', 1)
-        name = content.get('name', None)
-        status = content.get('status', 0)
-        lastposition  = content.get('lastposition', None)
-        image  = content.get('image', None)
-        owner  = content.get('owner', None)
-        
+        _id = content.get('id', 1)
+                
         conn = get_db()
         cur = conn.cursor()
         
-        SQL = "INSERT INTO vehicles (type, name, status, lastposition, image, owner) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;" 
-        data = (_type, name, status, lastposition, image, owner )
-        cur.execute(SQL, data) 
-        id_of_new_row = cur.fetchone()[0]        
+        SQL = "INSERT INTO tags (id, vehicle_id) VALUES (%s, %s) RETURNING id;" 
+        data = (_id, vehicle_id )
+        id_of_new_row = None
+        error_message = ""        
         
-        conn.commit()
+        try:
+            cur.execute(SQL, data) 
+        except Exception as e:
+            print(e)
+            if hasattr(e, 'diag') and hasattr(e.diag, 'message_detail') :
+                error_message = e.diag.message_detail
+            else :
+                error_message = "Database error" 
+            conn.rollback()
+        else:
+            conn.commit()
+            id_of_new_row = cur.fetchone()[0]        
+        
         cur.close()
+        
+        # TODO : 409 Conflict if tagId already exists
+        if id_of_new_row is None : return {"Error" : error_message}, 404
         
         return id_of_new_row, 201

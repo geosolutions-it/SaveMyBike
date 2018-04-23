@@ -8,6 +8,7 @@ from flask import jsonify, request
 from flask_restful import reqparse, Resource
 
 from Database import get_db
+from Utility import limit_int
 
 searchParser= reqparse.RequestParser()
 searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page').add_argument('tagId')
@@ -17,11 +18,29 @@ searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page
 class UsersList(Resource):
     def get(self):
         args = searchParser.parse_args()
-        print(args)
-        print(request.args)
+         
+        per_page = 50;
+        offset = 0;
+        
+        if args['per_page'] is not None:
+            try:
+                per_page=limit_int(int(args['per_page']), 0, 100)
+            except ValueError: 
+                pass
+        
+        if args['page'] is not None:
+            try:
+                offset=limit_int(int(args['page']) * per_page, 0)
+            except ValueError: 
+                pass
+        
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users order by id limit 50;")
+        
+        SQL="SELECT * FROM users order by id limit %s offset %s;"
+        data = (per_page, offset)
+        
+        cur.execute(SQL, data)
         # row = cur.fetchone()
         rows = cur.fetchall()
         if rows == None:
