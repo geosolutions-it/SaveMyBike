@@ -9,7 +9,7 @@ import psycopg2
 
 
 def connect_db():
-    return psycopg2.connect("dbname=savemybike user=savemybike password=savemybike")
+    return psycopg2.connect("")
 
 def get_db():
     """Opens a new database connection if there is none yet for the
