@@ -48,7 +48,7 @@ class VehiclesList(Resource):
             
         
         if tagId is not None:
-            SQL="SELECT v.* FROM vehicles as v JOIN tags as t ON v.id = t.vehicle_id where t.id = %s;"
+            SQL="SELECT v.* FROM vehicles as v JOIN tags as t ON v.id = t.vehicle_id where t.epc = %s;"
             data = (tagId,)
         else :            
             SQL="SELECT * FROM vehicles order by id limit %s offset %s;"
@@ -205,7 +205,7 @@ class TagsList(Resource):
 
         conn = get_db()
         cur = conn.cursor()
-        SQL = "SELECT id FROM tags where vehicle_id = %s order by id limit 50;" 
+        SQL = "SELECT epc FROM tags where vehicle_id = %s order by epc limit 50;" 
         data = (vehicle_id,) # keep the comma to make it a tuple
         cur.execute(SQL, data) 
         # row = cur.fetchone()
@@ -228,12 +228,12 @@ class TagsList(Resource):
         content = request.json
         print(content)
         
-        _id = content.get('id', 1)
+        _id = content.get('epc', 1)
                 
         conn = get_db()
         cur = conn.cursor()
         
-        SQL = "INSERT INTO tags (id, vehicle_id) VALUES (%s, %s) RETURNING id;" 
+        SQL = "INSERT INTO tags (epc, vehicle_id) VALUES (%s, %s) RETURNING epc;" 
         data = (_id, vehicle_id )
         id_of_new_row = None
         error_message = ""        
