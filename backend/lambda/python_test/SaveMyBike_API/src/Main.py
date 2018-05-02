@@ -38,13 +38,15 @@ def close_db(error):
 
 api = Api(app)
 
-api.add_resource(VehiclesList, '/vehicles')
-api.add_resource(Vehicle, '/vehicles/<vehicle_id>')
-api.add_resource(TagsList, '/vehicles/<vehicle_id>/tags')
+API_VERSION = 'v1.0'
+
+api.add_resource(VehiclesList, '/'+ API_VERSION +'/vehicles')
+api.add_resource(Vehicle, '/'+ API_VERSION +'/vehicles/<vehicle_id>')
+api.add_resource(TagsList, '/'+ API_VERSION +'/vehicles/<vehicle_id>/tags')
 
 
-api.add_resource(UsersList, '/users')
-api.add_resource(User, '/users/<user_id>')
+api.add_resource(UsersList, '/'+ API_VERSION +'/users')
+api.add_resource(User, '/'+ API_VERSION +'/users/<user_id>')
 
 if __name__ == '__main__':
     app.run(debug=True)
