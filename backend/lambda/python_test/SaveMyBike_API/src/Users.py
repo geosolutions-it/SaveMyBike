@@ -4,14 +4,14 @@ Created on 13 apr 2018
 @author: gnafu
 '''
 
-from flask import jsonify, request
+from flask import jsonify, request, json
 from flask_restful import reqparse, Resource
 
 from Database import get_db
 from Utility import limit_int
 
 searchParser= reqparse.RequestParser()
-searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page').add_argument('tagId')
+searchParser.add_argument('orderBy').add_argument('page').add_argument('per_page').add_argument('tagId').add_argument('dump')
 
 # UsersList
 # shows a list of all users, and lets you POST to add new users
@@ -21,6 +21,7 @@ class UsersList(Resource):
          
         per_page = 50;
         offset = 0;
+        dump = False;
         
         if args['per_page'] is not None:
             try:
@@ -34,11 +35,23 @@ class UsersList(Resource):
             except ValueError: 
                 pass
         
+        if args['dump'] is not None:
+            if args['dump'] == 'true':
+                dump = True 
+
+        print("DUMP is "+str(dump))        
+
         conn = get_db()
         cur = conn.cursor()
         
         SQL="SELECT * FROM users order by id limit %s offset %s;"
         data = (per_page, offset)
+
+        # if dump is true compose all users/vehicles/tags and output them
+        if dump:
+            SQL="SELECT * FROM users order by id asc;"
+            data = None
+        
         
         cur.execute(SQL, data)
         # row = cur.fetchone()
@@ -52,6 +65,42 @@ class UsersList(Resource):
         for row in rows:
             row = dict(zip(columns, row))
             result.append(row)
+
+        
+        if dump:
+            for i in result:
+                i['vehicles'] = []
+                print(json.dumps(i))
+                SQL="SELECT * FROM vehicles where owner = %s order by id asc;"
+                data = (i['id'],)
+                cur.execute(SQL, data)
+                vehicles = cur.fetchall()
+                if vehicles == None:
+                    print("There are no results for vehicles query")
+                    vehicles = []
+                
+                v_columns = [desc[0] for desc in cur.description]
+                for v in vehicles:
+                    v = dict(zip(v_columns, v))
+                    v['tags'] = []
+                    print(json.dumps(v))
+                    
+                    SQL = "SELECT epc FROM tags where vehicle_id = %s order by epc;" 
+                    data = (v['id'],)
+                    cur.execute(SQL, data)
+                    tags = cur.fetchall()
+                    if tags == None:
+                        print("There are no tags for this vehicles")
+                        tags = []
+                    
+                    t_columns = [desc[0] for desc in cur.description]
+                    for t in tags:
+                        t = dict(zip(t_columns, t))
+                        print(json.dumps(t))
+                        v['tags'].append(t)
+                    
+                    i['vehicles'].append(v)
+
 
         conn.commit()
         cur.close()
